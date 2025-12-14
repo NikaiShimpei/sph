@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上智大学クイズ - ランキング</title>
+    <!-- Google Fonts: Mplus 1p -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        /* --- 上智大学ブランドカラー定義 --- */
+        :root {
+            --sophia-claret: #9E1B32;
+            --sophia-claret-dark: #6f0125;
+            --sophia-claret-light: #b4143c;
+            --urban-navy: #1C2538;
+        }
+
+        /* --- 基本設定 --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "M PLUS 1p", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background: linear-gradient(135deg, #2d0a15 0%, #460117 50%, #6f0125 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- 16:9最適化 --- */
+        @media (aspect-ratio: 16/9), (min-aspect-ratio: 16/9) {
+            body {
+                padding: 2vh 3vw;
+            }
+        }
+
+        /* --- コンテナ --- */
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 3vh 4vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- 16:9最適化 --- */
+        @media (aspect-ratio: 16/9), (min-aspect-ratio: 16/9) {
+            .container {
+                padding: 2vh 5vw;
+            }
+        }
+
+        /* --- キャラクター画像 --- */
+        .character-image {
+            position: absolute;
+            z-index: 10;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            pointer-events: none;
+        }
+
+        .character-main {
+            position: absolute;
+            width: clamp(150px, 15vw, 300px);
+            height: auto;
+            animation: floatCharacter 3s ease-in-out infinite;
+        }
+
+        .character-main.rank3 {
+            left: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .character-ojigi {
+            bottom: 5%;
+            left: 5%;
+            width: clamp(120px, 12vw, 250px);
+            height: auto;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .character-ojigi.show {
+            opacity: 1;
+            animation: ojigiBounce 0.6s ease-out;
+        }
+
+        .character-sasuga {
+            position: absolute;
+            width: clamp(100px, 10vw, 200px);
+            height: auto;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .character-sasuga.rank2 {
+            right: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .character-sasuga.show {
+            opacity: 1;
+            animation: sasugaPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes floatCharacter {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes ojigiBounce {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-30px) rotate(-5deg);
+            }
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+        }
+
+        @keyframes sasugaPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        /* --- キラキラエフェクト（優勝者テキストの左右） --- */
+        .kiran-effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .kiran-effect.show {
+            opacity: 1 !important;
+        }
+
+        /* 優勝者画面のkiran-effectは常に表示 */
+        .announcement-screen.rank1 .announcement-rank .kiran-effect {
+            opacity: 1 !important;
+            visibility: visible !important;
+            display: block !important;
+        }
+
+        .kiran-effect img {
+            width: clamp(80px, 8vw, 150px);
+            height: auto;
+            animation: kiranGlow 2s ease-in-out infinite;
+        }
+
+        /* 優勝者画面での配置 */
+        .announcement-screen.rank1 {
+            position: relative;
+            overflow-y: auto;
+            overflow-x: visible;
+        }
+
+        /* 優勝者テキストの左右に配置 */
+        .announcement-screen.rank1 .announcement-rank {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible !important;
+            min-height: 1em;
+            padding: 0;
+            margin: 0 auto;
+        }
+
+        /* 優勝者テキスト内のkiran-effect */
+        .announcement-screen.rank1 .announcement-rank .kiran-effect {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 1 !important;
+            display: block !important;
+            visibility: visible !important;
+            z-index: 100 !important;
+        }
+
+        /* 左側のkiran.png: テキストの左端から38px左に配置 */
+        .announcement-screen.rank1 .announcement-rank .kiran-effect.left {
+            right: calc(100% + 38px);
+            left: auto;
+        }
+
+        /* 右側のkiran.png: テキストの右端から38px右に配置 */
+        .announcement-screen.rank1 .announcement-rank .kiran-effect.right {
+            left: calc(100% + 38px);
+            right: auto;
+        }
+
+        .announcement-screen.rank1 .announcement-rank .kiran-effect img {
+            display: block !important;
+            width: clamp(80px, 8vw, 150px);
+            height: auto;
+            visibility: visible !important;
+            opacity: 1 !important;
+            max-width: none;
+        }
+
+        @keyframes kiranGlow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.8;
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+                filter: brightness(1.5);
+            }
+        }
+
+        /* --- 金色のフラッシュエフェクト（ストロボ） --- */
+        .golden-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255, 215, 0, 0.9) 0%, rgba(255, 200, 0, 0.7) 30%, rgba(255, 180, 0, 0.4) 60%, transparent 100%);
+            pointer-events: none;
+            z-index: 998;
+            opacity: 0;
+            animation: strobeFlash 0.8s ease-in-out infinite;
+            display: none;
+        }
+
+        @keyframes strobeFlash {
+            0% {
+                opacity: 0;
+                transform: scale(1);
+            }
+            10% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+            20% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            30% {
+                opacity: 0.9;
+                transform: scale(1.05);
+            }
+            40% {
+                opacity: 0.2;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.15);
+            }
+            60% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+            70% {
+                opacity: 0.8;
+                transform: scale(1.08);
+            }
+            80% {
+                opacity: 0.1;
+                transform: scale(1);
+            }
+            90% {
+                opacity: 0.95;
+                transform: scale(1.12);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+
+        /* --- 終了画面のojigi画像 --- */
+        .end-ojigi {
+            width: clamp(150px, 15vw, 250px);
+            height: auto;
+            margin: 170px auto 3vh;
+            animation: ojigiEndAnimation 2s ease-in-out infinite;
+        }
+
+        @keyframes ojigiEndAnimation {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-20px) rotate(-5deg);
+            }
+            50% {
+                transform: translateY(-30px) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+        }
+
+        /* --- ヘッダー --- */
+        .header {
+            text-align: center;
+            margin-bottom: 4vh;
+        }
+
+        .header h1 {
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 900;
+            color: var(--sophia-claret-light);
+            text-shadow: 0 0 30px rgba(180, 20, 60, 0.9), 0 0 60px rgba(111, 1, 37, 0.7);
+            margin-bottom: 2vh;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        /* --- ランキングリスト --- */
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+            margin-bottom: 3vh;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        /* --- 16:9最適化 --- */
+        @media (aspect-ratio: 16/9), (min-aspect-ratio: 16/9) {
+            .ranking-list {
+                max-height: 65vh;
+                gap: 1.5vh;
+            }
+        }
+
+        .ranking-item {
+            background: rgba(0, 0, 0, 0.7);
+            border: 3px solid var(--sophia-claret-light);
+            border-radius: 20px;
+            padding: 2vh 3vw;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 0 30px rgba(180, 20, 60, 0.5), inset 0 0 20px rgba(180, 20, 60, 0.1);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideInUp 0.6s ease-out forwards;
+            transition: all 0.3s ease;
+        }
+
+        .ranking-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 40px rgba(180, 20, 60, 0.8), inset 0 0 30px rgba(180, 20, 60, 0.2);
+            border-color: #d41e4c;
+        }
+
+        .ranking-left {
+            display: flex;
+            align-items: center;
+            gap: 2vw;
+            flex: 1;
+        }
+
+        .ranking-number {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 900;
+            color: var(--sophia-claret-light);
+            min-width: 100px;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(180, 20, 60, 0.9);
+        }
+
+        .ranking-name {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 700;
+            color: white;
+        }
+
+        .ranking-right {
+            display: flex;
+            align-items: center;
+            gap: 3vw;
+        }
+
+        .ranking-score {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight: 900;
+            color: var(--sophia-claret-light);
+            text-shadow: 0 0 15px rgba(180, 20, 60, 0.9);
+        }
+
+        /* --- ボタン --- */
+        .btn {
+            width: auto;
+            max-width: 500px;
+            margin: 1.5vh auto 2vh;
+            padding: 1vh 3vw;
+            font-size: clamp(1.3rem, 2.5vw, 2rem);
+            font-weight: 700;
+            border: 3px solid var(--sophia-claret-light);
+            border-radius: 15px;
+            background: rgba(180, 20, 60, 0.4);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            box-shadow: 0 0 30px rgba(180, 20, 60, 0.6);
+            display: block;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out;
+            flex-shrink: 0;
+        }
+
+        .btn:hover {
+            background: rgba(180, 20, 60, 0.6);
+            box-shadow: 0 0 50px rgba(180, 20, 60, 0.9);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(1);
+        }
+
+        /* --- 音楽ボタン --- */
+        #music-toggle {
+            position: fixed;
+            top: 2vh;
+            left: 2vw;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+
+        #music-toggle:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        #music-toggle.muted {
+            opacity: 0.5;
+        }
+
+        /* --- 戻るボタン --- */
+        .back-btn {
+            position: fixed;
+            top: calc(2vh + 50px);
+            left: 2vw;
+            padding: 1vh 2vw;
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            z-index: 10;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: rgba(180, 20, 60, 0.6);
+            border-color: var(--sophia-claret-light);
+            transform: scale(1.1);
+        }
+
+        /* --- 発表画面 --- */
+        .announcement-screen {
+            text-align: center;
+            padding: 2vh 4vw;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 40px;
+            border: 5px solid;
+            box-shadow: 0 0 80px;
+            max-width: 90vw;
+            margin: 0 auto;
+            opacity: 0;
+            animation: fadeInScale 1.2s ease-out forwards;
+            position: relative;
+            overflow-y: auto;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* --- 16:9最適化 --- */
+        @media (aspect-ratio: 16/9), (min-aspect-ratio: 16/9) {
+            .announcement-screen {
+                padding: 2vh 5vw;
+                max-width: 85vw;
+            }
+        }
+
+        .announcement-screen.rank3 {
+            border-color: #cd7f32;
+            box-shadow: 0 0 80px rgba(205, 127, 50, 0.9);
+        }
+
+        .announcement-screen.rank2 {
+            border-color: #c0c0c0;
+            box-shadow: 0 0 80px rgba(192, 192, 192, 0.9);
+        }
+
+        .announcement-screen.rank1 {
+            border-color: #ffd700;
+            box-shadow: 0 0 100px rgba(255, 215, 0, 1);
+        }
+
+        .announcement-rank {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            margin-bottom: 1.5vh;
+            padding-top: 0.5vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1vw;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .announcement-rank-text {
+            display: inline-block;
+        }
+
+        .announcement-rank-number {
+            display: inline-block;
+        }
+
+        .announcement-screen.rank3 .announcement-rank-number {
+            font-size: clamp(3.75rem, 7.5vw, 6rem);
+        }
+
+        .announcement-screen.rank2 .announcement-rank-number {
+            font-size: clamp(4.5rem, 9vw, 7.2rem);
+        }
+
+        .announcement-screen.rank3 .announcement-rank {
+            color: #cd7f32;
+            text-shadow: 0 0 30px rgba(205, 127, 50, 0.9);
+        }
+
+        .announcement-screen.rank2 .announcement-rank {
+            color: #c0c0c0;
+            text-shadow: 0 0 30px rgba(192, 192, 192, 0.9);
+        }
+
+        .announcement-screen.rank1 .announcement-rank {
+            color: #ffd700;
+            text-shadow: 0 0 50px rgba(255, 215, 0, 1);
+        }
+
+        .announcement-names {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 900;
+            margin-bottom: 1.5vh;
+            color: white;
+            line-height: 1.5;
+            flex-shrink: 0;
+        }
+
+        .announcement-name-item {
+            display: block;
+            margin-bottom: 0.5em;
+        }
+
+        .announcement-score {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 2vh;
+            color: rgba(255, 255, 255, 0.95);
+            flex-shrink: 0;
+        }
+
+        .announcement-comment {
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid var(--sophia-claret-light);
+            border-radius: 20px;
+            padding: 2vh 3vw;
+            margin: 2vh 0;
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.95);
+            min-height: auto;
+            max-height: 30vh;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 1;
+            flex-grow: 0;
+        }
+
+        .announcement-comment.loading {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .no-rank-message {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 5vh 0;
+            padding: 4vh 5vw;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- 終了画面の背景 --- */
+        #end-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #end-screen .end-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('op背景.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            animation: backgroundZoom 20s ease-in-out infinite;
+            filter: brightness(1.1) hue-rotate(5deg) saturate(1.1);
+            z-index: 1;
+        }
+
+        @keyframes backgroundZoom {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        #end-screen .end-clouds-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        #end-screen .end-cloud {
+            position: absolute;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        #end-screen #end-kumo1 {
+            width: 37.44%;
+            top: 5%;
+            left: 2%;
+            animation: cloudFloat 2.5s ease-in-out infinite;
+            animation-delay: 0s;
+        }
+
+        #end-screen #end-kumo2 {
+            width: 42.9%;
+            top: calc(15% + 150px - 70px - 100px - 100px);
+            left: 60%;
+            animation: cloudFloatCenter 2.5s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        #end-screen #end-kumo3 {
+            width: 20.8%;
+            top: calc(25% - 80px);
+            left: calc(35% + 30px);
+            animation: cloudFloatCenterRight 2.5s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        #end-screen #end-kumo4 {
+            width: 19.5%;
+            top: calc(45% + 40px - 200px - 200px);
+            left: calc(10% - 30px);
+            animation: cloudFloat 2.5s ease-in-out infinite;
+            animation-delay: 1.5s;
+        }
+
+        #end-screen #end-kumo5 {
+            width: 16.64%;
+            top: calc(50% - 240px - 240px - 70px - 30px);
+            left: calc(75% + 100px - 500px - 80px);
+            animation: cloudFloatCenterRight 2.5s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes cloudFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-22.5px);
+            }
+        }
+
+        @keyframes cloudFloatCenter {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-22.5px);
+            }
+        }
+
+        @keyframes cloudFloatCenterRight {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-22.5px);
+            }
+        }
+
+        #end-screen .end-bird-character {
+            position: absolute;
+            width: 20%;
+            max-width: 238px;
+            top: calc(5% + 160px);
+            left: calc(12.5% - 100px);
+            z-index: 3;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: flyAcross 8s linear infinite;
+        }
+
+        @keyframes flyAcross {
+            0% {
+                left: calc(12.5% - 100px);
+                transform: scaleX(1) translateY(0);
+            }
+            12.5% {
+                transform: scaleX(1) translateY(-25px);
+            }
+            25% {
+                transform: scaleX(1) translateY(0);
+            }
+            37.5% {
+                transform: scaleX(1) translateY(25px);
+            }
+            49% {
+                transform: scaleX(1) translateY(-20px);
+            }
+            50% {
+                left: calc(87.5% - 100px);
+                transform: scaleX(-1) translateY(0);
+            }
+            62.5% {
+                transform: scaleX(-1) translateY(-25px);
+            }
+            75% {
+                transform: scaleX(-1) translateY(0);
+            }
+            87.5% {
+                transform: scaleX(-1) translateY(25px);
+            }
+            99% {
+                transform: scaleX(-1) translateY(-20px);
+            }
+            100% {
+                left: calc(12.5% - 100px);
+                transform: scaleX(1) translateY(0);
+            }
+        }
+
+        /* --- 終了画面の中央エリア（タイトルとサブタイトル） --- */
+        #end-screen .end-center-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% - 150px));
+            width: 100%;
+            text-align: center;
+            z-index: 4;
+        }
+
+        /* メインタイトル */
+        #end-screen .end-main-title {
+            width: 75%;
+            max-width: 2800px;
+            height: auto;
+            margin: 0 auto;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: titleGlow 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8)) brightness(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 40px rgba(255, 255, 255, 1.2)) brightness(1.2);
+            }
+        }
+
+        /* サブタイトル */
+        #end-screen .end-subtitle {
+            width: 55%;
+            max-width: 1990px;
+            height: auto;
+            margin: -30px auto 0;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: subtitleGlow 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
+        }
+
+        @keyframes subtitleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7)) brightness(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 30px rgba(255, 255, 255, 1)) brightness(1.15);
+            }
+        }
+
+        /* --- 終了画面のコンテンツエリア --- */
+        .end-screen {
+            text-align: center;
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            max-width: 100%;
+            margin: 0;
+            opacity: 1;
+            animation: none;
+            position: absolute;
+            top: calc(50% + 200px);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            width: 100%;
+        }
+
+        /* 終了画面の閉じるボタン */
+        .end-screen .btn {
+            position: relative;
+            z-index: 10;
+            display: inline-block;
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .end-message {
+            width: auto;
+            max-width: 80vw;
+            height: auto;
+            margin: -120px auto 5vh;
+            display: block;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .end-message:hover {
+            transform: scale(1.05);
+        }
+
+        /* --- ローディング --- */
+        .loading {
+            text-align: center;
+            padding: 10vh 5vw;
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .spinner {
+            border: 5px solid rgba(180, 20, 60, 0.3);
+            border-top: 5px solid var(--sophia-claret-light);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1s linear infinite;
+            margin: 4vh auto;
+        }
+
+        /* --- アニメーション --- */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- レスポンシブ --- */
+        @media (max-width: 768px) {
+            .ranking-item {
+                flex-direction: column;
+                text-align: center;
+                gap: 2vh;
+            }
+
+            .ranking-left {
+                flex-direction: column;
+            }
+
+            .character-main,
+            .character-ojigi,
+            .character-sasuga {
+                display: none;
+            }
+        }
+
+        /* --- 画面切り替え --- */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* --- 演出エフェクト --- */
+        .celebration-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+
+        /* 紙吹雪 */
+        .confetti {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ffd700;
+            animation: confettiFall linear infinite;
+        }
+
+        .confetti:nth-child(2n) { background: #ff6b6b; }
+        .confetti:nth-child(3n) { background: #4ecdc4; }
+        .confetti:nth-child(4n) { background: #ffe66d; }
+        .confetti:nth-child(5n) { background: #a8e6cf; }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+            25% {
+                transform: translateY(-50vh) translateX(-30px) rotate(180deg);
+            }
+            50% {
+                transform: translateY(0) translateX(30px) rotate(360deg);
+            }
+            75% {
+                transform: translateY(50vh) translateX(-20px) rotate(540deg);
+            }
+            100% {
+                transform: translateY(100vh) translateX(0) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* 花火 */
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: fireworkExplode 1.2s ease-out forwards;
+        }
+
+        @keyframes fireworkExplode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(25);
+                opacity: 0;
+            }
+        }
+
+        .firework-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: particleSpread 1.8s ease-out forwards;
+        }
+
+        @keyframes particleSpread {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* 拍手エフェクト */
+        .applause-effect {
+            position: absolute;
+            font-size: 4rem;
+            animation: applauseFloat 2.5s ease-out forwards;
+        }
+
+        @keyframes applauseFloat {
+            0% {
+                transform: translateY(0) scale(0);
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-150px) scale(1.8);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- キラキラエフェクト -->
+    <div class="kiran-effect" id="kiran-effect">
+        <img src="kiran.png" alt="キラキラ">
+    </div>
+
+    <!-- 音楽ボタン -->
+    <div id="music-toggle" onclick="toggleMusic()">🔊</div>
+
+    <!-- キャラクター画像 -->
+    <img src="main.png" alt="メインキャラクター" class="character-image character-main" id="character-main">
+    <img src="ojigi.png" alt="おじぎ" class="character-image character-ojigi" id="character-ojigi">
+    <img src="sasuga.png" alt="さすが" class="character-image character-sasuga" id="character-sasuga">
+
+    <div class="container">
+        <!-- ランキングリスト画面 -->
+        <div id="ranking-screen" class="screen active">
+            <div class="header">
+                <h1>🏆 ランキング 🏆</h1>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>ランキングを読み込み中...</p>
+            </div>
+
+            <div id="ranking-content" style="display: none;">
+                <div class="ranking-list" id="ranking-list"></div>
+                <button class="btn" id="announce-top3-btn" onclick="announceTop3()" style="display: none;">
+                    トップ３を発表する
+                </button>
+            </div>
+        </div>
+
+        <!-- 演出コンテナ -->
+        <div id="celebration-container" class="celebration-container"></div>
+
+        <!-- 第3位発表画面 -->
+        <div id="rank3-screen" class="screen">
+            <button class="back-btn" onclick="goBackToRanking()">← 戻る</button>
+            <div class="announcement-screen rank3" id="rank3-announcement">
+                <div class="announcement-rank">
+                    <span class="announcement-rank-text">第</span>
+                    <span class="announcement-rank-number">3</span>
+                    <span class="announcement-rank-text">位</span>
+                </div>
+                <div class="announcement-names" id="rank3-names"></div>
+                <div class="announcement-score" id="rank3-score"></div>
+                <div class="announcement-comment loading" id="rank3-comment">
+                    コメントを生成中...
+                </div>
+                <button class="btn" id="announce-rank2-btn" onclick="announceRank2()" style="display: none;">
+                    第2位を発表
+                </button>
+            </div>
+        </div>
+
+        <!-- 第2位発表画面 -->
+        <div id="rank2-screen" class="screen">
+            <button class="back-btn" onclick="goBackToRank3()">← 戻る</button>
+            <div class="announcement-screen rank2" id="rank2-announcement">
+                <div class="announcement-rank">
+                    <span class="announcement-rank-text">第</span>
+                    <span class="announcement-rank-number">2</span>
+                    <span class="announcement-rank-text">位</span>
+                </div>
+                <div id="rank2-content"></div>
+                <button class="btn" id="announce-rank1-btn" onclick="announceRank1()" style="display: none;">
+                    1位を発表する
+                </button>
+            </div>
+        </div>
+
+        <!-- 優勝者発表画面 -->
+        <div id="rank1-screen" class="screen">
+            <button class="back-btn" onclick="goBackToRank2()">← 戻る</button>
+            <div class="announcement-screen rank1" id="rank1-announcement">
+                <div class="announcement-rank">
+                    🏆 優勝者 🏆
+                    <!-- kiran.pngを優勝者テキストの左右に配置 -->
+                    <div class="kiran-effect left" id="kiran-effect-left-rank1">
+                        <img src="kiran.png" alt="キラキラ">
+                    </div>
+                    <div class="kiran-effect right" id="kiran-effect-right-rank1">
+                        <img src="kiran.png" alt="キラキラ">
+                    </div>
+                </div>
+                <div class="announcement-names" id="rank1-names"></div>
+                <div class="announcement-score" id="rank1-score"></div>
+                <div class="announcement-comment loading" id="rank1-comment">
+                    コメントを生成中...
+                </div>
+                <button class="btn" id="close-btn" onclick="showEndScreen()" style="display: none;">
+                    閉じる
+                </button>
+            </div>
+        </div>
+
+        <!-- 終了画面 -->
+        <div id="end-screen" class="screen">
+            <!-- 背景要素 -->
+            <div class="end-background"></div>
+            <div class="end-clouds-container">
+                <img src="kumo1.png" alt="雲1" class="end-cloud" id="end-kumo1">
+                <img src="kumo2.png" alt="雲2" class="end-cloud" id="end-kumo2">
+                <img src="kumo3.png" alt="雲3" class="end-cloud" id="end-kumo3">
+                <img src="kumo4.png" alt="雲4" class="end-cloud" id="end-kumo4">
+                <img src="kumo5.png" alt="雲5" class="end-cloud" id="end-kumo5">
+                <img src="flying2.png" alt="飛んでいるキャラクター" class="end-bird-character">
+            </div>
+            <!-- タイトルとサブタイトル -->
+            <div class="end-center-area">
+                <img src="almamater2.png" alt="Quiz Alma Mater" class="end-main-title">
+                <img src="sh.png" alt="Sophia & Hakuhodo" class="end-subtitle">
+            </div>
+            <!-- コンテンツ -->
+            <button class="back-btn" onclick="goBackToRank1()" style="position: relative; z-index: 10;">← 戻る</button>
+            <div class="end-screen">
+                <img src="ojigi.png" alt="おじぎ" class="end-ojigi">
+                <img src="thanks.png" alt="以上でクイズは終了です ご参加ありがとうございました！" class="end-message" onclick="closeRanking()" style="cursor: pointer;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Firebase初期化 =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFQCgaQo_q3sqx7SfypA8CjOAiH5tOKII",
+            authDomain: "sophia-quiz-2025.firebaseapp.com",
+            databaseURL: "https://sophia-quiz-2025-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sophia-quiz-2025",
+            storageBucket: "sophia-quiz-2025.firebasestorage.app",
+            messagingSenderId: "131577494118",
+            appId: "1:131577494118:web:3ad280a0b7bd9a28e50ba7"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ===== Dify API設定 =====
+        const API_KEY = 'app-7sfKtZXSmUYpqRg4Jn0iiZBH';
+        const BASE_URL = 'https://api.dify.ai/v1';
+        let currentConversationId = "";
+
+        // ===== グローバル変数 =====
+        let allParticipants = [];
+        let rankedParticipants = [];
+        let top3Data = { rank1: [], rank2: [], rank3: [] };
+
+        // ===== ダミーデータ生成（テスト用） =====
+        function generateDummyData() {
+            const names = [
+                '山田太郎', '佐藤花子', '鈴木一郎', '田中次郎', '渡辺三郎',
+                '伊藤四郎', '中村五郎', '小林六郎', '加藤七郎', '吉田八郎',
+                '山本九郎', '松本十郎', '井上十一', '木村十二', '林十三',
+                '斎藤十四', '清水十五', '山口十六', '森十七', '池田十八',
+                '橋本十九', '石井二十', '前田二一', '小川二二', '藤田二三',
+                '岡田二四', '長谷川二五', '村上二六', '近藤二七', '坂本二八',
+                '遠藤二九', '青木三十', '藤井三一', '西村三二', '福田三三',
+                '太田三四', '藤原三五', '岡本三六', '松田三七', '中島三八',
+                '中野三九', '原田四十', '小野四一', '田村四二', '竹内四三',
+                '金子四四', '菅原四五', '横山四六', '新井四七', '岩崎四八'
+            ];
+
+            const dummyData = [];
+            for (let i = 0; i < 50; i++) {
+                const score = Math.floor(Math.random() * 11);
+                dummyData.push({
+                    userId: `dummy-${i}`,
+                    name: names[i] || `参加者${i + 1}`,
+                    score: score
+                });
+            }
+
+            return dummyData;
+        }
+
+        // ===== ランキングデータを取得 =====
+        function loadRanking() {
+            const participantsRef = database.ref('quizzes/current/participants');
+            
+            participantsRef.once('value').then((snapshot) => {
+                const participants = snapshot.val();
+                
+                if (!participants || Object.keys(participants).length < 3) {
+                    console.log('テスト環境：ダミーデータを使用します');
+                    allParticipants = generateDummyData();
+                } else {
+                    allParticipants = Object.keys(participants).map(userId => ({
+                        userId: userId,
+                        name: participants[userId].name || '名無し',
+                        score: participants[userId].score || 0
+                    }));
+                }
+
+                calculateRanking();
+                displayRanking();
+            }).catch((error) => {
+                console.error('ランキング取得エラー:', error);
+                allParticipants = generateDummyData();
+                calculateRanking();
+                displayRanking();
+            });
+        }
+
+        // ===== ランキングを計算（同点処理含む） =====
+        function calculateRanking() {
+            const sorted = [...allParticipants].sort((a, b) => b.score - a.score);
+            
+            const scoreGroups = {};
+            sorted.forEach(p => {
+                if (!scoreGroups[p.score]) {
+                    scoreGroups[p.score] = [];
+                }
+                scoreGroups[p.score].push(p);
+            });
+
+            rankedParticipants = [];
+            let currentRank = 1;
+            const scores = Object.keys(scoreGroups).map(Number).sort((a, b) => b - a);
+
+            scores.forEach(score => {
+                const group = scoreGroups[score];
+                group.forEach(participant => {
+                    participant.rank = currentRank;
+                    rankedParticipants.push(participant);
+                });
+                currentRank += group.length;
+            });
+
+            top3Data = { rank1: [], rank2: [], rank3: [] };
+            
+            if (rankedParticipants.length > 0) {
+                const topScore = rankedParticipants[0].score;
+                const topGroup = rankedParticipants.filter(p => p.score === topScore);
+                top3Data.rank1 = topGroup;
+
+                if (topGroup.length < rankedParticipants.length) {
+                    const secondScore = rankedParticipants[topGroup.length].score;
+                    const secondGroup = rankedParticipants.filter(p => p.score === secondScore);
+                    top3Data.rank2 = secondGroup;
+
+                    if (topGroup.length + secondGroup.length < rankedParticipants.length) {
+                        const thirdScore = rankedParticipants[topGroup.length + secondGroup.length].score;
+                        const thirdGroup = rankedParticipants.filter(p => p.score === thirdScore);
+                        top3Data.rank3 = thirdGroup;
+                    }
+                }
+            }
+        }
+
+        // ===== ランキングを表示 =====
+        function displayRanking() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('ranking-content').style.display = 'block';
+
+            const rankingList = document.getElementById('ranking-list');
+            rankingList.innerHTML = '';
+
+            const others = rankedParticipants.filter(p => 
+                !top3Data.rank1.includes(p) && 
+                !top3Data.rank2.includes(p) && 
+                !top3Data.rank3.includes(p)
+            );
+
+            const reversedOthers = [...others].reverse();
+            reversedOthers.forEach((participant, index) => {
+                const item = createRankingItem(participant, participant.rank);
+                item.style.animationDelay = `${index * 0.05}s`;
+                rankingList.appendChild(item);
+            });
+
+            document.getElementById('announce-top3-btn').style.display = 'block';
+        }
+
+        // ===== ランキングアイテムを作成 =====
+        function createRankingItem(participant, rank) {
+            const item = document.createElement('div');
+            item.className = 'ranking-item';
+
+            item.innerHTML = `
+                <div class="ranking-left">
+                    <div class="ranking-number">${rank}位</div>
+                    <div class="ranking-name">${participant.name}</div>
+                </div>
+                <div class="ranking-right">
+                    <div class="ranking-score">${participant.score}問正解</div>
+                </div>
+            `;
+
+            return item;
+        }
+
+        // ===== 第3位を発表 =====
+        function announceTop3() {
+            showScreen('rank3-screen');
+            startCelebration(3);
+            // 3位ではojigi.pngは表示しない
+            // main.pngを第3位のテキストの左側に配置
+            const characterMain = document.getElementById('character-main');
+            characterMain.classList.add('rank3');
+            characterMain.style.display = 'block';
+            // 音楽は継続（何もしない）
+            
+            if (top3Data.rank3.length > 0) {
+                const namesHtml = top3Data.rank3.map(p => 
+                    `<span class="announcement-name-item">${p.name}さん</span>`
+                ).join('');
+                const score = top3Data.rank3[0].score;
+                
+                document.getElementById('rank3-names').innerHTML = namesHtml;
+                document.getElementById('rank3-score').textContent = `${score}点`;
+                
+                getCommentFromDify(3, top3Data.rank3, score).then(comment => {
+                    document.getElementById('rank3-comment').textContent = comment;
+                    document.getElementById('rank3-comment').classList.remove('loading');
+                    document.getElementById('announce-rank2-btn').style.display = 'block';
+                });
+            } else {
+                document.getElementById('rank3-names').innerHTML = '<span class="announcement-name-item">該当者なし</span>';
+                document.getElementById('rank3-score').textContent = '';
+                document.getElementById('rank3-comment').textContent = '第3位の該当者がいません。';
+                document.getElementById('rank3-comment').classList.remove('loading');
+                document.getElementById('announce-rank2-btn').style.display = 'block';
+            }
+        }
+
+        // ===== 第2位を発表 =====
+        function announceRank2() {
+            showScreen('rank2-screen');
+            startCelebration(2);
+            // sasuga.pngを第2位のテキストの右側に配置
+            const characterSasuga = document.getElementById('character-sasuga');
+            characterSasuga.classList.add('rank2', 'show');
+            characterSasuga.style.display = 'block';
+            // 音楽は継続（何もしない）
+            
+            const content = document.getElementById('rank2-content');
+            content.innerHTML = '';
+            
+            if (top3Data.rank2.length > 0) {
+                const namesHtml = top3Data.rank2.map(p => 
+                    `<span class="announcement-name-item">${p.name}さん</span>`
+                ).join('');
+                const score = top3Data.rank2[0].score;
+                
+                content.innerHTML = `
+                    <div class="announcement-names">${namesHtml}</div>
+                    <div class="announcement-score">${score}点</div>
+                    <div class="announcement-comment loading" id="rank2-comment">
+                        コメントを生成中...
+                    </div>
+                `;
+                
+                getCommentFromDify(2, top3Data.rank2, score).then(comment => {
+                    document.getElementById('rank2-comment').textContent = comment;
+                    document.getElementById('rank2-comment').classList.remove('loading');
+                    document.getElementById('announce-rank1-btn').style.display = 'block';
+                });
+            } else {
+                content.innerHTML = `
+                    <div class="no-rank-message">
+                        第2位は不在です！
+                    </div>
+                `;
+                document.getElementById('announce-rank1-btn').style.display = 'block';
+            }
+        }
+
+        // ===== 優勝者を発表 =====
+        function announceRank1() {
+            // 背景音楽を停止
+            if (backgroundMusic && isMusicPlaying) {
+                musicWasPlayingBeforeRank1 = true;
+                stopBackgroundMusic();
+            }
+            
+            // drumroll.m4aを3つ同時に大音量で再生
+            const drumrollAudios = [];
+            let loadedCount = 0;
+            let transitionScheduled = false;
+            const totalAudios = 3;
+            
+            // 遷移をスケジュールする関数
+            const scheduleTransition = (duration) => {
+                if (transitionScheduled) return;
+                transitionScheduled = true;
+                // 音楽が終わる1秒前に遷移（duration - 1秒後）
+                const transitionTime = Math.max(0, (duration - 1) * 1000); // ミリ秒に変換
+                setTimeout(() => {
+                    showRank1Screen();
+                }, transitionTime);
+            };
+            
+            for (let i = 0; i < totalAudios; i++) {
+                const drumrollAudio = new Audio('drumroll.m4a');
+                drumrollAudio.volume = 1.0; // 最大音量
+                drumrollAudios.push(drumrollAudio);
+                
+                // メタデータが読み込まれたら、durationを取得して遷移をスケジュール
+                drumrollAudio.addEventListener('loadedmetadata', () => {
+                    loadedCount++;
+                    if (loadedCount === 1 && drumrollAudio.duration) {
+                        // 最初のAudioのdurationを使用して遷移をスケジュール
+                        scheduleTransition(drumrollAudio.duration);
+                    }
+                });
+                
+                drumrollAudio.play().catch(e => {
+                    console.log(`drumroll.m4a ${i + 1}の再生に失敗しました:`, e);
+                    // 再生に失敗した場合、デフォルトで6秒後に遷移（7秒 - 1秒）
+                    if (!transitionScheduled) {
+                        scheduleTransition(7);
+                    }
+                });
+            }
+            
+            // フォールバック：メタデータが読み込めない場合、6秒後に遷移
+            setTimeout(() => {
+                if (!transitionScheduled) {
+                    scheduleTransition(7);
+                }
+            }, 1000);
+        }
+        
+        // 優勝者ページを表示する関数（共通処理）
+        function showRank1Screen() {
+            showScreen('rank1-screen');
+            startCelebration(1);
+            
+            // kiran.pngを優勝者テキストの左右に配置（確実に表示）
+            setTimeout(() => {
+                const kiranLeft = document.getElementById('kiran-effect-left-rank1');
+                const kiranRight = document.getElementById('kiran-effect-right-rank1');
+                if (kiranLeft) {
+                    kiranLeft.classList.add('show');
+                    kiranLeft.style.cssText = 'opacity: 1 !important; display: block !important; visibility: visible !important; position: absolute; z-index: 100;';
+                    const imgLeft = kiranLeft.querySelector('img');
+                    if (imgLeft) {
+                        imgLeft.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; width: clamp(80px, 8vw, 150px); height: auto;';
+                    }
+                }
+                if (kiranRight) {
+                    kiranRight.classList.add('show');
+                    kiranRight.style.cssText = 'opacity: 1 !important; display: block !important; visibility: visible !important; position: absolute; z-index: 100;';
+                    const imgRight = kiranRight.querySelector('img');
+                    if (imgRight) {
+                        imgRight.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; width: clamp(80px, 8vw, 150px); height: auto;';
+                    }
+                }
+                console.log('kiran-left:', kiranLeft, 'kiran-right:', kiranRight);
+            }, 100);
+            
+            // 金色のフラッシュエフェクト（ストロボ）を表示
+            const goldenFlash = document.getElementById('golden-flash');
+            if (goldenFlash) goldenFlash.style.display = 'block';
+            
+            // 学生歌sabiを5つ同時に再生
+            playStudentSongMultiple();
+            
+            // 優勝者データを再計算（念のため）
+            calculateRanking();
+            
+            // デバッグ用ログ
+            console.log('top3Data.rank1:', top3Data.rank1);
+            console.log('rankedParticipants:', rankedParticipants);
+            
+            // DOM要素を取得
+            const rank1NamesEl = document.getElementById('rank1-names');
+            const rank1ScoreEl = document.getElementById('rank1-score');
+            const rank1CommentEl = document.getElementById('rank1-comment');
+            const closeBtnEl = document.getElementById('close-btn');
+            
+            // 優勝者データの取得と表示
+            let winnerData = null;
+            let winnerScore = 0;
+            
+            if (top3Data.rank1 && top3Data.rank1.length > 0) {
+                winnerData = top3Data.rank1;
+                winnerScore = top3Data.rank1[0].score;
+            } else if (rankedParticipants.length > 0) {
+                // ランキングから直接取得
+                const topScore = rankedParticipants[0].score;
+                winnerData = rankedParticipants.filter(p => p.score === topScore);
+                if (winnerData.length > 0) {
+                    winnerScore = winnerData[0].score;
+                }
+            }
+            
+            // 優勝者名を表示
+            if (winnerData && winnerData.length > 0) {
+                const namesHtml = winnerData.map(p => 
+                    `<span class="announcement-name-item">${p.name}さん</span>`
+                ).join('');
+                
+                console.log('優勝者名:', namesHtml);
+                console.log('スコア:', winnerScore);
+                
+                if (rank1NamesEl) rank1NamesEl.innerHTML = namesHtml;
+                if (rank1ScoreEl) rank1ScoreEl.textContent = `${winnerScore}点`;
+                
+                // コメントを取得（エラーハンドリング付き）
+                getCommentFromDify(1, winnerData, winnerScore)
+                    .then(comment => {
+                        console.log('コメント取得成功:', comment);
+                        if (rank1CommentEl) {
+                            rank1CommentEl.textContent = comment;
+                            rank1CommentEl.classList.remove('loading');
+                        }
+                        if (closeBtnEl) closeBtnEl.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('コメント取得エラー:', error);
+                        // エラーでもデフォルトメッセージとボタンを表示
+                        if (rank1CommentEl) {
+                            rank1CommentEl.textContent = '優勝おめでとうございます！素晴らしい成績でした！';
+                            rank1CommentEl.classList.remove('loading');
+                        }
+                        if (closeBtnEl) closeBtnEl.style.display = 'block';
+                    });
+            } else {
+                // データがない場合でも表示
+                console.warn('優勝者データが見つかりません');
+                if (rank1NamesEl) rank1NamesEl.innerHTML = '<span class="announcement-name-item">該当者なし</span>';
+                if (rank1ScoreEl) rank1ScoreEl.textContent = '';
+                if (rank1CommentEl) {
+                    rank1CommentEl.textContent = '優勝者がいません。';
+                    rank1CommentEl.classList.remove('loading');
+                }
+                if (closeBtnEl) closeBtnEl.style.display = 'block';
+            }
+        }
+
+        // ===== キャラクター表示関数 =====
+        function hideAllCharacters() {
+            const characterMain = document.getElementById('character-main');
+            const characterOjigi = document.getElementById('character-ojigi');
+            const characterSasuga = document.getElementById('character-sasuga');
+            const kiranLeft = document.getElementById('kiran-effect-left-rank1');
+            const kiranRight = document.getElementById('kiran-effect-right-rank1');
+            const kiranLeftGlobal = document.getElementById('kiran-effect-left');
+            const kiranRightGlobal = document.getElementById('kiran-effect-right');
+            const goldenFlash = document.getElementById('golden-flash');
+            
+            if (characterMain) {
+                characterMain.style.display = 'none';
+                characterMain.classList.remove('rank3');
+            }
+            if (characterOjigi) characterOjigi.classList.remove('show');
+            if (characterSasuga) {
+                characterSasuga.classList.remove('show', 'rank2');
+                characterSasuga.style.display = 'none';
+            }
+            if (kiranLeft) kiranLeft.classList.remove('show');
+            if (kiranRight) kiranRight.classList.remove('show');
+            if (kiranLeftGlobal) kiranLeftGlobal.classList.remove('show');
+            if (kiranRightGlobal) kiranRightGlobal.classList.remove('show');
+            if (goldenFlash) goldenFlash.style.display = 'none';
+            
+            // 学生歌を停止
+            stopStudentSongMultiple();
+        }
+
+        // ===== Difyからコメントを取得 =====
+        async function getCommentFromDify(rank, participants, score) {
+            // エラー時は即座にデフォルトメッセージを返す
+            const defaultMessage = rank === 1 
+                ? '優勝おめでとうございます！素晴らしい成績でした！'
+                : `第${rank}位おめでとうございます！素晴らしい成績でした！`;
+            
+            // パラメータチェック
+            if (!participants || participants.length === 0) {
+                console.warn('参加者データがありません');
+                return defaultMessage;
+            }
+            
+            const names = participants.map(p => p.name).join('さん、') + 'さん';
+            const prompt = rank === 1 
+                ? `上智大学のクイズイベントで、${names}が${score}問正解して優勝しました。ソフィアンくんとして、優勝者を讃える短いコメント（100文字程度）を日本語で書いてください。`
+                : `上智大学のクイズイベントで、${names}が${score}問正解して第${rank}位になりました。ソフィアンくんとして、第${rank}位を讃える短いコメント（100文字程度）を日本語で書いてください。`;
+
+            try {
+                const response = await fetch(`${BASE_URL}/chat-messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        inputs: {},
+                        query: prompt,
+                        response_mode: 'blocking',
+                        conversation_id: currentConversationId || undefined
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Dify API エラー (${response.status}):`, errorText);
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (data.conversation_id) {
+                    currentConversationId = data.conversation_id;
+                }
+
+                return data.answer || defaultMessage;
+            } catch (error) {
+                console.error('Dify API エラー:', error);
+                // エラー時はデフォルトメッセージを返す
+                return defaultMessage;
+            }
+        }
+
+        // ===== 終了画面を表示 =====
+        function showEndScreen() {
+            showScreen('end-screen');
+            // 学生歌sabiを停止
+            stopStudentSongMultiple();
+            // 終了音楽を再生
+            playEndMusic();
+            hideAllCharacters();
+        }
+
+
+        // ===== ランキングを閉じる =====
+        function closeRanking() {
+            if (window.opener) {
+                window.close();
+            } else {
+                window.location.href = '../chat/sophiaquiz.html';
+            }
+        }
+
+        // ===== 画面を切り替え =====
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // ===== 戻る機能 =====
+        function goBackToRanking() {
+            stopCelebration();
+            hideAllCharacters();
+            showScreen('ranking-screen');
+            // 音楽は継続（何もしない）
+        }
+
+        function goBackToRank3() {
+            stopCelebration();
+            showScreen('rank3-screen');
+            startCelebration(3);
+            // main.pngを第3位のテキストの左側に配置
+            const characterMain = document.getElementById('character-main');
+            characterMain.classList.add('rank3');
+            characterMain.style.display = 'block';
+            // 音楽は継続（何もしない）
+        }
+
+        function goBackToRank2() {
+            stopCelebration();
+            showScreen('rank2-screen');
+            startCelebration(2);
+            // sasuga.pngを第2位のテキストの右側に配置
+            const characterSasuga = document.getElementById('character-sasuga');
+            characterSasuga.classList.add('rank2', 'show');
+            characterSasuga.style.display = 'block';
+            // 終了音楽を停止
+            stopEndMusic();
+            // 学生歌sabiを停止
+            stopStudentSongMultiple();
+            // ranking.mp3を再生
+            playBackgroundMusic();
+        }
+
+        function goBackToRank1() {
+            stopCelebration();
+            showScreen('rank1-screen');
+            startCelebration(1);
+            // kiran.pngを優勝者テキストの左右に配置（確実に表示）
+            setTimeout(() => {
+                const kiranLeft = document.getElementById('kiran-effect-left-rank1');
+                const kiranRight = document.getElementById('kiran-effect-right-rank1');
+                if (kiranLeft) {
+                    kiranLeft.classList.add('show');
+                    kiranLeft.style.cssText = 'opacity: 1 !important; display: block !important; visibility: visible !important; position: absolute; z-index: 100;';
+                    const imgLeft = kiranLeft.querySelector('img');
+                    if (imgLeft) {
+                        imgLeft.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; width: clamp(80px, 8vw, 150px); height: auto;';
+                    }
+                }
+                if (kiranRight) {
+                    kiranRight.classList.add('show');
+                    kiranRight.style.cssText = 'opacity: 1 !important; display: block !important; visibility: visible !important; position: absolute; z-index: 100;';
+                    const imgRight = kiranRight.querySelector('img');
+                    if (imgRight) {
+                        imgRight.style.cssText = 'display: block !important; visibility: visible !important; opacity: 1 !important; width: clamp(80px, 8vw, 150px); height: auto;';
+                    }
+                }
+                console.log('kiran-left:', kiranLeft, 'kiran-right:', kiranRight);
+            }, 100);
+            // 金色のフラッシュエフェクトを表示
+            const goldenFlash = document.getElementById('golden-flash');
+            if (goldenFlash) goldenFlash.style.display = 'block';
+            // 終了音楽を停止
+            stopEndMusic();
+            // ranking.mp3を停止
+            stopBackgroundMusic();
+            // 学生歌sabiを5つ同時に再生
+            playStudentSongMultiple();
+        }
+
+        function goBackToRank1FromEnd() {
+            goBackToRank1();
+        }
+
+        // ===== 演出機能 =====
+        let celebrationInterval = null;
+        let celebrationAudio = null;
+        let backgroundMusic = null;
+        let endMusic = null;
+        let isMusicPlaying = false;
+        let musicWasPlayingBeforeRank1 = false;
+
+        function initBackgroundMusic() {
+            if (!backgroundMusic) {
+                backgroundMusic = new Audio('ranking.mp3');
+                backgroundMusic.loop = true;
+                backgroundMusic.volume = 0.3;
+            }
+        }
+
+        function playBackgroundMusic() {
+            if (!backgroundMusic) {
+                initBackgroundMusic();
+            }
+            if (!isMusicPlaying) {
+                backgroundMusic.play().catch(e => {
+                    console.log('背景音楽の再生に失敗しました:', e);
+                });
+                isMusicPlaying = true;
+                updateMusicButtonState();
+            }
+        }
+
+        // デフォルトで音楽はoff
+        function initMusicState() {
+            isMusicPlaying = false;
+            updateMusicButtonState();
+        }
+
+        function stopBackgroundMusic() {
+            if (backgroundMusic && isMusicPlaying) {
+                backgroundMusic.pause();
+                isMusicPlaying = false;
+                updateMusicButtonState();
+            }
+        }
+
+        function resumeBackgroundMusic() {
+            if (backgroundMusic && !isMusicPlaying) {
+                backgroundMusic.play().catch(e => {
+                    console.log('背景音楽の再生に失敗しました:', e);
+                });
+                isMusicPlaying = true;
+                updateMusicButtonState();
+            }
+        }
+
+        function restartBackgroundMusic() {
+            if (backgroundMusic) {
+                backgroundMusic.currentTime = 0;
+                if (!isMusicPlaying) {
+                    playBackgroundMusic();
+                }
+            }
+        }
+
+        function playEndMusic() {
+            // すべての音楽を停止
+            if (backgroundMusic) {
+                backgroundMusic.pause();
+                isMusicPlaying = false;
+                updateMusicButtonState();
+            }
+            // 学生歌sabiを停止
+            stopStudentSongMultiple();
+            // 終了音楽を再生
+            if (endMusic) {
+                endMusic.pause();
+                endMusic.currentTime = 0;
+            }
+            endMusic = new Audio('校歌_ending.mp3');
+            endMusic.volume = 0.5;
+            endMusic.loop = true;
+            endMusic.play().catch(e => {
+                console.log('エンド音楽の再生に失敗しました:', e);
+            });
+        }
+
+        function stopEndMusic() {
+            if (endMusic) {
+                endMusic.pause();
+                endMusic.currentTime = 0;
+                endMusic = null;
+            }
+        }
+
+        // 学生歌sabiを5つ同時に再生
+        let studentSongAudios = [];
+        
+        function playStudentSongMultiple() {
+            // 既存の再生を停止
+            stopStudentSongMultiple();
+            
+            const songPath = '学生歌sabi.m4a';
+            studentSongAudios = [];
+            
+            for (let i = 0; i < 5; i++) {
+                const audio = new Audio(songPath);
+                audio.volume = 0.5;
+                audio.loop = false;
+                studentSongAudios.push(audio);
+                
+                // 同時に再生（タイミングを完全に合わせる）
+                audio.play().catch(e => {
+                    console.log(`学生歌sabi ${i + 1}の再生に失敗しました:`, e);
+                });
+            }
+            
+            return studentSongAudios;
+        }
+        
+        function stopStudentSongMultiple() {
+            studentSongAudios.forEach(audio => {
+                if (audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+            });
+            studentSongAudios = [];
+        }
+
+        function toggleMusic() {
+            if (!backgroundMusic) {
+                initBackgroundMusic();
+            }
+            if (isMusicPlaying) {
+                stopBackgroundMusic();
+            } else {
+                playBackgroundMusic();
+            }
+        }
+
+        function updateMusicButtonState() {
+            const button = document.getElementById('music-toggle');
+            if (isMusicPlaying) {
+                button.textContent = '🔊';
+                button.classList.remove('muted');
+            } else {
+                button.textContent = '🔇';
+                button.classList.add('muted');
+            }
+        }
+
+        function startCelebration(rank) {
+            stopCelebration();
+            
+            const container = document.getElementById('celebration-container');
+            container.innerHTML = '';
+
+            // 紙吹雪の量をランクに応じて調整
+            let confettiCount = 40;
+            let fireworkCount = 0;
+            let applauseCount = 0;
+            let confettiDelay = 0;
+
+            if (rank === 3) {
+                confettiCount = 40;
+                fireworkCount = 0;
+                applauseCount = 0;
+                confettiDelay = 0;
+                playSound('applause3.mp3', 0.3);
+            } else if (rank === 2) {
+                confettiCount = Math.floor(40 * 1.5); // 60
+                fireworkCount = Math.floor(5 * 1.5); // 7-8
+                applauseCount = 0;
+                confettiDelay = -5000; // 5秒早める
+                playSound('applause2.mp3', 0.5);
+            } else if (rank === 1) {
+                confettiCount = Math.floor(40 * 2.5 * 2); // 200（2倍）
+                fireworkCount = Math.floor(12 * 2.5); // 30
+                applauseCount = Math.floor(30 * 2.5 * 2); // 150（2倍）
+                confettiDelay = 0;
+                playSound('applause3.mp3', 0.7);
+            }
+
+            // エフェクトを生成
+            createConfetti(confettiCount, confettiDelay);
+            if (fireworkCount > 0) {
+                createFireworks(fireworkCount);
+            }
+            if (applauseCount > 0) {
+                if (rank === 1) {
+                    // 1位の場合は絵文字の表示時間を3倍に（2500ms * 3 = 7500ms）
+                    createApplauseEffect(applauseCount, 7500);
+                } else {
+                    createApplauseEffect(applauseCount);
+                }
+            }
+        }
+
+        function stopCelebration() {
+            if (celebrationInterval) {
+                clearInterval(celebrationInterval);
+                celebrationInterval = null;
+            }
+            if (celebrationAudio) {
+                celebrationAudio.pause();
+                celebrationAudio = null;
+            }
+            document.getElementById('celebration-container').innerHTML = '';
+        }
+
+        function createConfetti(count, delayOffset = 0) {
+            const container = document.getElementById('celebration-container');
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                // アニメーション時間を約3.3倍に（速度を30%に）
+                confetti.style.animationDuration = (Math.random() * 10 + 6.7) + 's';
+                const baseDelay = Math.random() * 2;
+                confetti.style.animationDelay = (baseDelay + (delayOffset / 1000)) + 's';
+                container.appendChild(confetti);
+            }
+        }
+
+        function createFireworks(count) {
+            const container = document.getElementById('celebration-container');
+            const colors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#ffe66d', '#a8e6cf', '#ff9ff3'];
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * 100;
+                    const y = Math.random() * 50 + 20;
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    firework.style.left = x + '%';
+                    firework.style.top = y + '%';
+                    firework.style.background = color;
+                    container.appendChild(firework);
+                    
+                    for (let j = 0; j < 16; j++) {
+                        const angle = (Math.PI * 2 * j) / 16;
+                        const distance = 60 + Math.random() * 60;
+                        const particle = document.createElement('div');
+                        particle.className = 'firework-particle';
+                        particle.style.left = x + '%';
+                        particle.style.top = y + '%';
+                        particle.style.background = color;
+                        particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                        particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
+                        container.appendChild(particle);
+                        
+                        setTimeout(() => {
+                            particle.remove();
+                        }, 1800);
+                    }
+                    
+                    setTimeout(() => {
+                        firework.remove();
+                    }, 1200);
+                }, i * 250);
+            }
+        }
+
+        function createApplauseEffect(count = 30, duration = 2500) {
+            const container = document.getElementById('celebration-container');
+            const emojis = ['👏', '🎉', '🎊', '✨', '🌟'];
+            
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const applause = document.createElement('div');
+                    applause.className = 'applause-effect';
+                    applause.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    applause.style.left = Math.random() * 100 + '%';
+                    applause.style.top = '80%';
+                    container.appendChild(applause);
+                    
+                    setTimeout(() => {
+                        applause.remove();
+                    }, duration);
+                }, i * 80);
+            }
+        }
+
+        function playSound(filename, volume) {
+            try {
+                const audio = new Audio(filename);
+                audio.volume = volume;
+                audio.play().catch(e => {
+                    console.log('音声ファイルが見つかりません:', filename);
+                });
+                celebrationAudio = audio;
+            } catch (e) {
+                console.log('音声再生エラー:', e);
+            }
+        }
+
+        // ===== ページ読み込み時にランキングを取得 =====
+        window.addEventListener('load', () => {
+            loadRanking();
+            initMusicState(); // デフォルトで音楽はoff
+            hideAllCharacters(); // 初期状態でキャラクターを非表示
+        });
+
+        window.addEventListener('beforeunload', () => {
+            stopBackgroundMusic();
+            stopEndMusic();
+            stopCelebration();
+            stopStudentSongMultiple();
+        });
+    </script>
+</body>
+</html>
