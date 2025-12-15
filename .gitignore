@@ -32,6 +32,6 @@ node_modules/
 .env
 .env.local
 
-# 機密情報を含む設定ファイル
-config.js
+# 注意: config.jsはGitHub Pagesで動作させるためにGitに含めています
+# APIキーは新しいものに変更済みです
 
