@@ -32,3 +32,6 @@ node_modules/
 .env
 .env.local
 
+# 機密情報を含む設定ファイル
+config.js
+

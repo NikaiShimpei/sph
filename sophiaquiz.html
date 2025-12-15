@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sophian Quiz Chat</title>
+    <!-- Google Fonts: Mplus 1p -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1p:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- Dify API設定（機密情報） -->
+    <script src="config.js"></script>
+    <style>
+        /* --- 上智大学ブランドカラー定義 --- */
+        :root {
+            --sophia-claret: #9E1B32; /* メインカラー（エンジ） */
+            --urban-navy: #1C2538;    /* サポートカラー（紺） */
+            --urban-gray-dark: #606875; /* サポートカラー（濃灰） */
+            --urban-gray-light: #95A0AB; /* サポートカラー（薄灰） */
+            --bg-color: #F5F6F8;      /* 背景色（薄いグレー） */
+        }
+
+        /* --- 基本設定 --- */
+        body { 
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            color: var(--urban-navy);
+        }
+        
+        /* --- チャットエリア --- */
+        #chat-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            background-image: linear-gradient(to bottom, #ffffff 0%, var(--bg-color) 100%);
+        }
+        
+        /* メッセージ共通スタイル */
+        .message { 
+            max-width: 80%; 
+            padding: 12px 18px; 
+            border-radius: 18px; 
+            font-size: 16px; 
+            line-height: 1.6; 
+            position: relative; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* ユーザーのメッセージ（右側） */
+        .message.user { 
+            align-self: flex-end; 
+            background-color: var(--urban-navy); 
+            color: white; 
+            border-bottom-right-radius: 4px; 
+        }
+
+        /* ボットのメッセージ（左側） */
+        .message.bot { 
+            align-self: flex-start; 
+            background-color: white; 
+            color: var(--urban-navy); 
+            border-bottom-left-radius: 4px; 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 12px; 
+            border: 1px solid #e0e0e0;
+        }
+        
+        /* アイコン画像のスタイル */
+        .avatar { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 50%; 
+            object-fit: cover; 
+            border: 2px solid var(--sophia-claret); 
+            flex-shrink: 0;
+        }
+
+        /* クイズ開始カード（チャット内） */
+        .quiz-card { 
+            background: #fff; 
+            border-left: 5px solid var(--sophia-claret); 
+            padding: 15px 20px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            margin-top: 5px;
+        }
+        .quiz-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(158, 27, 50, 0.15); 
+        }
+        .quiz-card h3 { 
+            margin: 0 0 8px 0; 
+            color: var(--sophia-claret); 
+            font-size: 1.1em;
+        }
+        .quiz-card p {
+            margin: 0 0 15px 0;
+            color: var(--urban-gray-dark);
+            font-size: 0.9em;
+        }
+        .quiz-card button { 
+            background: var(--sophia-claret); 
+            color: white; 
+            border: none; 
+            padding: 8px 25px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        .quiz-card button:hover {
+            background-color: #7a1526;
+        }
+
+        /* --- 入力エリア --- */
+        #input-area { 
+            padding: 20px; 
+            background: white; 
+            display: flex; 
+            gap: 12px; 
+            border-top: 1px solid #e0e0e0; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.03);
+        }
+        input { 
+            flex: 1; 
+            padding: 15px 20px; 
+            font-size: 16px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 30px; 
+            outline: none; 
+            transition: border-color 0.2s;
+            color: var(--urban-navy);
+        }
+        input:focus {
+            border-color: var(--sophia-claret);
+        }
+        #send-btn { 
+            background-color: var(--sophia-claret); 
+            color: white; 
+            border: none; 
+            padding: 0 30px; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        #send-btn:hover {
+            background-color: #7a1526;
+        }
+
+        /* --- 全画面クイズオーバーレイ --- */
+        #quiz-overlay {
+            display: none; /* 最初は隠す */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--sophia-claret); /* 上智エンジ色 */
+            background-image: radial-gradient(circle at center, #b01e38 0%, var(--sophia-claret) 100%);
+            color: white;
+            flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px; box-sizing: border-box;
+        }
+
+        #quiz-question { 
+            font-size: 2.2em; /* スマホでも見やすいように少し調整 */
+            font-weight: bold; 
+            text-align: center; 
+            margin-bottom: 40px; 
+            line-height: 1.4; 
+            max-width: 900px;
+        }
+        
+        #quiz-options { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 20px; 
+            width: 90%; 
+            max-width: 900px; 
+        }
+        .option-btn {
+            background: white; 
+            color: var(--sophia-claret); 
+            border: none;
+            padding: 25px; 
+            font-size: 1.5em; 
+            font-weight: bold; 
+            border-radius: 12px;
+            cursor: pointer; 
+            transition: all 0.2s; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 120px;
+        }
+        .option-btn:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .option-btn:active { 
+            transform: translateY(2px); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        #close-overlay { 
+            position: absolute; 
+            top: 30px; 
+            right: 30px; 
+            background: rgba(255,255,255,0.2); 
+            border: 1px solid white; 
+            color: white; 
+            font-size: 1rem; 
+            padding: 10px 20px; 
+            border-radius: 30px; 
+            cursor: pointer; 
+            transition: background 0.2s;
+        }
+        #close-overlay:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        /* スマホ対応 */
+        @media (max-width: 600px) {
+            #quiz-question { font-size: 1.5em; margin-bottom: 20px; }
+            #quiz-options { grid-template-columns: 1fr; gap: 15px; }
+            .option-btn { font-size: 1.2em; padding: 20px; min-height: 80px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="chat-container">
+        <div class="message bot">
+            <img src="sohiankun.jpg" class="avatar">
+            <div>こんにちは！上智大学についてのクイズを出しますよ。「歴史」や「キャンパス」などテーマを入力してください。</div>
+        </div>
+    </div>
+
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="テーマを入力（例：上智の歴史について）" onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="send-btn" onclick="sendMessage()">送信</button>
+    </div>
+
+    <div id="quiz-overlay">
+        <button id="close-overlay" onclick="closeQuiz()">× 閉じる</button>
+        <div id="quiz-question">ここに問題が表示されます</div>
+        <div id="quiz-options">
+            </div>
+    </div>
+
+    <script>
+        // ===== Dify API設定 =====
+        // API_KEYとBASE_URLはconfig.jsから読み込まれます
+
+        // ★会話IDを保存する変数（最初は空）
+        // これがあるおかげで、2回目以降も「さっきの続き」だと認識されます
+        let currentConversationId = "";
+
+        async function sendMessage() {
+            const inputField = document.getElementById('user-input');
+            const text = inputField.value;
+            if (!text) return;
+
+            // ユーザーのメッセージを表示
+            addMessage(text, 'user');
+            inputField.value = '';
+
+            // Loading表示
+            const loadingId = addMessage('考え中...', 'bot', true);
+
+            try {
+                // 送信データの準備
+                const payload = {
+                    inputs: {},
+                    query: text,
+                    response_mode: "blocking",
+                    user: "guest-user",
+                    files: []
+                };
+
+                // ★重要：もし続きの会話なら、IDをセットして送信する
+                if (currentConversationId) {
+                    payload.conversation_id = currentConversationId;
+                }
+
+                // Dify APIへのリクエスト
+                const response = await fetch(`${BASE_URL}/chat-messages`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // ★重要：AIから返ってきた「会話ID」を保存して更新する
+                if (data.conversation_id) {
+                    currentConversationId = data.conversation_id;
+                }
+                
+                // Loadingを消す
+                const loadingMsg = document.getElementById(loadingId);
+                if(loadingMsg) loadingMsg.remove();
+
+                const aiResponse = data.answer;
+
+                // JSONかどうか判定して処理を分ける
+                try {
+                    // DifyがMarkdown記号(```json)を含めて返してきた場合のクリーニング処理
+                    let cleanJson = aiResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                    const quizData = JSON.parse(cleanJson);
+                    
+                    // JSONパースに成功したらクイズカードを表示
+                    addQuizCard(quizData);
+
+                } catch (e) {
+                    // JSONでなければ（普通の会話なら）そのまま表示
+                    addMessage(aiResponse, 'bot');
+                }
+
+            } catch (error) {
+                console.error(error);
+                const loadingMsg = document.getElementById(loadingId);
+                if(loadingMsg) loadingMsg.innerText = "エラーが発生しました。通信環境などを確認してください。";
+            }
+        }
+
+        function addMessage(text, sender, isLoading = false) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            div.id = isLoading ? 'loading-msg' : '';
+
+            if (sender === 'bot') {
+                // ★アイコン画像を指定
+                div.innerHTML = `<img src="sohiankun.jpg" class="avatar"><div>${text}</div>`;
+            } else {
+                div.innerText = text;
+            }
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div.id;
+        }
+
+        function addQuizCard(quizData) {
+            const container = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            
+            // クイズデータをHTML属性に埋め込むためのエスケープ処理
+            const dataStr = JSON.stringify(quizData).replace(/"/g, '&quot;');
+            
+            // ★アイコン画像を指定
+            div.innerHTML = `
+                <img src="sohiankun.jpg" class="avatar">
+                <div class="quiz-card" onclick="startQuiz(${dataStr})">
+                    <h3>クイズが生成されました！</h3>
+                    <p>テーマ：${quizData.question.substring(0, 10)}...</p>
+                    <button>全画面で表示する</button>
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 全画面モードを起動
+        function startQuiz(data) {
+            document.getElementById('quiz-question').innerText = data.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = ''; // リセット
+
+            data.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-overlay').style.display = 'flex';
+        }
+
+        function closeQuiz() {
+            document.getElementById('quiz-overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

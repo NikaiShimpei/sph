@@ -11,6 +11,8 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <!-- Dify API設定（機密情報） -->
+    <script src="../config.js"></script>
     <style>
         /* --- 上智大学ブランドカラー定義 --- */
         :root {
@@ -1249,8 +1251,7 @@
         const database = firebase.database();
 
         // ===== Dify API設定 =====
-        const API_KEY = 'app-7sfKtZXSmUYpqRg4Jn0iiZBH';
-        const BASE_URL = 'https://api.dify.ai/v1';
+        // API_KEYとBASE_URLはconfig.jsから読み込まれます
         let currentConversationId = "";
 
         // ===== グローバル変数 =====
