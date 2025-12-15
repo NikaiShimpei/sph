@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Alma Mater - オープニング</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            font-family: "M PLUS 1p", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+        }
+
+        /* 背景 */
+        #background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('op背景.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            animation: backgroundZoom 20s ease-in-out infinite;
+            filter: brightness(1.1) hue-rotate(5deg) saturate(1.1);
+            z-index: 1;
+        }
+
+        @keyframes backgroundZoom {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        /* コンテナ */
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+        }
+
+        /* 雲とキャラクターのコンテナ */
+        #clouds-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+        }
+
+        /* 雲 */
+        .cloud {
+            position: absolute;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        #kumo1 {
+            width: 37.44%;
+            top: 5%;
+            left: 2%;
+            animation: cloudFloat 2.5s ease-in-out infinite;
+            animation-delay: 0s;
+        }
+
+        #kumo2 {
+            width: 42.9%;
+            top: calc(15% + 150px - 70px - 100px - 100px);
+            left: 60%;
+            animation: cloudFloatCenter 2.5s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+
+        #kumo3 {
+            width: 20.8%;
+            top: calc(25% - 80px);
+            left: calc(35% + 30px);
+            animation: cloudFloatCenterRight 2.5s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        #kumo4 {
+            width: 19.5%;
+            top: calc(45% + 40px - 200px - 200px);
+            left: calc(10% - 30px);
+            animation: cloudFloat 2.5s ease-in-out infinite;
+            animation-delay: 1.5s;
+        }
+
+        #kumo5 {
+            width: 16.64%;
+            top: calc(50% - 240px - 240px - 70px - 30px);
+            left: calc(75% + 100px - 500px - 80px);
+            animation: cloudFloatCenterRight 2.5s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        @keyframes cloudFloat {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-22.5px);
+            }
+        }
+
+        @keyframes cloudFloatCenter {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-22.5px);
+            }
+        }
+
+        @keyframes cloudFloatCenterRight {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-22.5px);
+            }
+        }
+
+        /* 飛んでいるキャラクター */
+        #bird-character {
+            position: absolute;
+            width: 20%;
+            max-width: 238px;
+            top: calc(5% + 160px);
+            left: calc(12.5% - 100px);
+            z-index: 4;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: flyAcross 8s linear infinite;
+        }
+
+        @keyframes flyAcross {
+            0% {
+                left: calc(12.5% - 100px);
+                transform: scaleX(1) translateY(0);
+            }
+            12.5% {
+                transform: scaleX(1) translateY(-25px);
+            }
+            25% {
+                transform: scaleX(1) translateY(0);
+            }
+            37.5% {
+                transform: scaleX(1) translateY(25px);
+            }
+            49% {
+                transform: scaleX(1) translateY(-20px);
+            }
+            50% {
+                left: calc(87.5% - 100px);
+                transform: scaleX(-1) translateY(0);
+            }
+            62.5% {
+                transform: scaleX(-1) translateY(-25px);
+            }
+            75% {
+                transform: scaleX(-1) translateY(0);
+            }
+            87.5% {
+                transform: scaleX(-1) translateY(25px);
+            }
+            99% {
+                transform: scaleX(-1) translateY(-20px);
+            }
+            100% {
+                left: calc(12.5% - 100px);
+                transform: scaleX(1) translateY(0);
+            }
+        }
+
+        /* 中央エリア */
+        #center-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% - 150px));
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+        }
+
+        /* メインタイトル */
+        #main-title {
+            width: 75%;
+            max-width: 2800px;
+            height: auto;
+            margin: 0 auto;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: titleGlow 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8));
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8)) brightness(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 40px rgba(255, 255, 255, 1.2)) brightness(1.2);
+            }
+        }
+
+        /* サブタイトル */
+        #subtitle {
+            width: 55%;
+            max-width: 1990px;
+            height: auto;
+            margin: -30px auto 0;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: subtitleGlow 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
+        }
+
+        @keyframes subtitleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7)) brightness(1);
+            }
+            50% {
+                filter: drop-shadow(0 0 30px rgba(255, 255, 255, 1.1)) brightness(1.15);
+            }
+        }
+
+        /* 下部エリア */
+        #bottom-area {
+            position: absolute;
+            bottom: 8%;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            z-index: 6;
+        }
+
+        /* STARTボタンコンテナ */
+        #start-button-container {
+            position: relative;
+            display: inline-block;
+            width: 12%;
+            min-width: 200px;
+            max-width: 350px;
+            cursor: pointer;
+        }
+
+        /* STARTボタン */
+        #start-button {
+            width: 100%;
+            height: auto;
+            transition: opacity 0.3s ease;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            animation: buttonPulse 2s ease-in-out infinite;
+        }
+
+        /* STARTボタンの点滅アニメーション */
+        @keyframes buttonPulse {
+            0%, 100% {
+                opacity: 1;
+                filter: brightness(1);
+            }
+            50% {
+                opacity: 0.7;
+                filter: brightness(1.3);
+            }
+        }
+
+        /* pxlogo画像（ホバー時表示） */
+        #pxlogo-hover {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: auto;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        /* ホバー時：startボタンを非表示、pxlogoを表示してふわふわアニメーション */
+        #start-button-container:hover #start-button {
+            opacity: 0 !important;
+            pointer-events: none;
+            animation: none !important;
+        }
+
+        #start-button-container:hover #pxlogo-hover {
+            opacity: 1;
+            pointer-events: auto;
+            animation: floatUpDown 2s ease-in-out infinite;
+        }
+
+        /* マウスが外れた時：startボタンを表示、pxlogoを非表示 */
+        #start-button-container:not(:hover) #start-button {
+            opacity: 1;
+            pointer-events: auto;
+            animation: buttonPulse 2s ease-in-out infinite;
+        }
+
+        #start-button-container:not(:hover) #pxlogo-hover {
+            opacity: 0;
+            pointer-events: none;
+            animation: none;
+        }
+
+        @keyframes floatUpDown {
+            0%, 100% {
+                transform: translate(-50%, -50%) translateY(0);
+            }
+            50% {
+                transform: translate(-50%, -50%) translateY(-10px);
+            }
+        }
+
+        /* pxlogo拡大オーバーレイ（クリック時） */
+        #pxlogo-zoom-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 100vw;
+            height: 100vh;
+            background-image: url('pxlogo.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+        }
+
+        #pxlogo-zoom-overlay.zooming {
+            transform: translate(-50%, -50%) scale(10);
+            opacity: 1;
+        }
+
+        /* 音楽ボタン */
+        #music-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        #music-toggle:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        #music-toggle.muted {
+            opacity: 0.5;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            #main-title {
+                width: 90%;
+            }
+            #subtitle {
+                width: 80%;
+            }
+            #start-button-container {
+                width: 30%;
+                min-width: 150px;
+            }
+            #bird-character {
+                width: 25%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景 -->
+    <div id="background"></div>
+
+    <!-- コンテナ -->
+    <div id="container">
+        <!-- 雲とキャラクター -->
+        <div id="clouds-container">
+            <img id="kumo1" src="kumo1.png" alt="雲1" class="cloud">
+            <img id="kumo2" src="kumo2.png" alt="雲2" class="cloud">
+            <img id="kumo3" src="kumo3.png" alt="雲3" class="cloud">
+            <img id="kumo4" src="kumo4.png" alt="雲4" class="cloud">
+            <img id="kumo5" src="kumo5.png" alt="雲5" class="cloud">
+            <img id="bird-character" src="flying2.png" alt="飛んでいるキャラクター">
+        </div>
+
+        <!-- 中央エリア -->
+        <div id="center-area">
+            <img id="main-title" src="almamater2.png" alt="Quiz Alma Mater">
+            <img id="subtitle" src="sh.png" alt="Sophia & Hakuhodo">
+        </div>
+
+        <!-- 下部エリア -->
+        <div id="bottom-area">
+            <div id="start-button-container" onclick="goToChatWithEffect()">
+                <img id="start-button" src="start.png" alt="START">
+                <img id="pxlogo-hover" src="pxlogo.png" alt="PX Logo">
+            </div>
+        </div>
+    </div>
+
+    <!-- pxlogo拡大オーバーレイ -->
+    <div id="pxlogo-zoom-overlay"></div>
+
+    <!-- 音楽ボタン -->
+    <div id="music-toggle" onclick="toggleMusic()">🔊</div>
+
+    <script>
+        // 音楽関連
+        let backgroundMusic = null;
+        let isMusicPlaying = false;
+
+        // ページ読み込み時に音楽を初期化
+        function initMusic() {
+            backgroundMusic = new Audio('opener.mp3');
+            backgroundMusic.loop = true;
+            backgroundMusic.volume = 0.5;
+            
+            // ページを離れる時に音楽を停止
+            window.addEventListener('beforeunload', () => {
+                if (backgroundMusic) {
+                    backgroundMusic.pause();
+                    backgroundMusic = null;
+                }
+            });
+        }
+
+        // 音楽の再生/停止を切り替え
+        function toggleMusic() {
+            if (!backgroundMusic) {
+                initMusic();
+            }
+
+            if (isMusicPlaying) {
+                stopMusic();
+            } else {
+                playMusic();
+            }
+        }
+
+        // 音楽を再生
+        function playMusic() {
+            if (backgroundMusic) {
+                backgroundMusic.play().catch(error => {
+                    console.log('音楽の再生に失敗しました:', error);
+                });
+                isMusicPlaying = true;
+                updateMusicButtonState();
+            }
+        }
+
+        // 音楽を停止
+        function stopMusic() {
+            if (backgroundMusic) {
+                backgroundMusic.pause();
+                backgroundMusic.currentTime = 0;
+                isMusicPlaying = false;
+                updateMusicButtonState();
+            }
+        }
+
+        // 音楽ボタンの状態を更新
+        function updateMusicButtonState() {
+            const button = document.getElementById('music-toggle');
+            if (isMusicPlaying) {
+                button.textContent = '🔊';
+                button.classList.remove('muted');
+            } else {
+                button.textContent = '🔇';
+                button.classList.add('muted');
+            }
+        }
+
+        // チャットページへ遷移（エフェクト付き）
+        function goToChatWithEffect() {
+            const overlay = document.getElementById('pxlogo-zoom-overlay');
+            overlay.classList.add('zooming');
+            
+            setTimeout(() => {
+                window.location.href = '../chat/sophiaquiz.html';
+            }, 600);
+        }
+
+        // ページ読み込み時に音楽ボタンの初期状態を設定
+        window.addEventListener('load', () => {
+            updateMusicButtonState();
+        });
+
+        // EnterキーでStartボタンをクリック
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                goToChatWithEffect();
+            }
+        });
+    </script>
+</body>
+</html>
+
