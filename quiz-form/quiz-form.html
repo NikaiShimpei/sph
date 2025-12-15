@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クイズ回答フォーム</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "M PLUS 1p", "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background: linear-gradient(135deg, #2d0a15 0%, #460117 50%, #6f0125 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .main-logo {
+            width: clamp(40px, 8vw, 60px);
+            height: auto;
+        }
+
+        .user-name {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .question-info {
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .question-number {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+            font-weight: bold;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .option-btn {
+            background: rgba(0, 0, 0, 0.6);
+            border: 3px solid #b4143c;
+            color: white;
+            padding: 20px;
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 0 20px rgba(180, 20, 60, 0.4);
+        }
+
+        .option-btn:hover:not(.disabled):not(.selected) {
+            background: rgba(0, 0, 0, 0.8);
+            border-color: #d41e4c;
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(180, 20, 60, 0.8);
+        }
+
+        .option-btn.selected {
+            background: rgba(255, 235, 59, 0.3);
+            border-color: #ffeb3b;
+            box-shadow: 0 0 30px rgba(255, 235, 59, 0.6);
+        }
+
+        .option-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .option-label {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            color: #b4143c;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .option-btn.selected .option-label {
+            color: #ffeb3b;
+        }
+
+        .status-message {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .status-message.waiting {
+            color: #ffeb3b;
+        }
+
+        .status-message.voted {
+            color: #4caf50;
+        }
+
+        .status-message.closed {
+            color: #f44336;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #b4143c 0%, #d41e4c 100%);
+            border: none;
+            color: white;
+            padding: 20px 40px;
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(180, 20, 60, 0.4);
+            margin-top: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d41e4c 0%, #f02a5c 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(180, 20, 60, 0.8);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .submit-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            padding: 40px;
+        }
+
+        .waiting-screen {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .waiting-title {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .waiting-message {
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .waiting-logo {
+            width: clamp(80px, 15vw, 150px);
+            height: auto;
+            margin: 30px auto;
+            display: block;
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ユーザー登録画面 */
+        .registration-container {
+            max-width: 500px;
+            width: 100%;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .registration-title {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .registration-logo {
+            width: clamp(40px, 8vw, 60px);
+            height: auto;
+        }
+
+        .registration-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .input-label {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            text-align: left;
+        }
+
+        .name-input {
+            padding: 15px;
+            font-size: clamp(1.1rem, 3vw, 1.4rem);
+            border: 3px solid #b4143c;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            width: 100%;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #ffeb3b;
+            box-shadow: 0 0 20px rgba(255, 235, 59, 0.5);
+        }
+
+        .register-btn {
+            background: linear-gradient(135deg, #b4143c 0%, #d41e4c 100%);
+            border: none;
+            color: white;
+            padding: 20px;
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(180, 20, 60, 0.4);
+        }
+
+        .register-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d41e4c 0%, #f02a5c 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 0 30px rgba(180, 20, 60, 0.8);
+        }
+
+        .register-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            color: #f44336;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            padding: 10px;
+            background: rgba(244, 67, 54, 0.2);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ユーザー登録画面 -->
+        <div id="registration-container" class="registration-container" style="display: none;">
+            <h2 class="registration-title">
+                <img src="sophialogo.png" alt="Sophia Logo" class="registration-logo">
+                クイズ参加登録
+            </h2>
+            <div class="error-message" id="error-message"></div>
+            <form class="registration-form" onsubmit="handleRegistration(event)">
+                <div class="input-group">
+                    <label class="input-label" for="name-input">お名前を入力してください</label>
+                    <input 
+                        type="text" 
+                        id="name-input" 
+                        class="name-input" 
+                        placeholder="例: 山田太郎"
+                        required
+                        maxlength="50"
+                    >
+                </div>
+                <button type="submit" class="register-btn" id="register-btn">登録する</button>
+            </form>
+        </div>
+
+        <!-- メイン画面 -->
+        <div id="main-container" style="display: none;">
+            <h1>
+                <img src="sophialogo.png" alt="Sophia Logo" class="main-logo">
+                クイズ回答
+            </h1>
+            <div id="user-name" class="user-name" style="display: none;"></div>
+            <div id="waiting-screen" class="waiting-screen">
+                <h2 class="waiting-title">クイズ開始を待っています</h2>
+                <div class="waiting-message">
+                    クイズが開始されるまでお待ちください。<br>
+                    クイズが開始されると、自動的に問題が表示されます。
+                </div>
+                <div class="loading">待機中...</div>
+                <img src="sophialogo.png" alt="Sophia Logo" class="waiting-logo">
+            </div>
+            <div id="status-message" class="status-message waiting" style="display: none;">問題を待機中...</div>
+            <div id="question-container" style="display: none;">
+                <div class="question-info">
+                    <div class="question-number" id="question-number"></div>
+                    <div class="question-text" id="question-text"></div>
+                </div>
+                <div class="options-container" id="options-container"></div>
+                <div class="submit-container">
+                    <button id="submit-btn" class="submit-btn" onclick="handleSubmit()" disabled>回答を送信する</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== Firebase初期化 =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyDFQCgaQo_q3sqx7SfypA8CjOAiH5tOKII",
+            authDomain: "sophia-quiz-2025.firebaseapp.com",
+            databaseURL: "https://sophia-quiz-2025-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sophia-quiz-2025",
+            storageBucket: "sophia-quiz-2025.firebasestorage.app",
+            messagingSenderId: "131577494118",
+            appId: "1:131577494118:web:3ad280a0b7bd9a28e50ba7"
+        };
+        
+        // Firebase初期化
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // 状態管理
+        let currentQuestionNumber = 0;
+        let hasVoted = false;
+        let isQuestionClosed = false;
+        let selectedOption = null;
+        let currentQuestionListener = null;
+        let questionDataListener = null;
+        let userName = '';
+        let userId = '';
+        let userAnswers = {}; // { questionNumber: selectedLabel }
+        let closedQuestionsListener = null;
+
+        // ユーザーIDを生成（ユーザー名ベース）
+        function generateUserId(name) {
+            return `user-${name}`;
+        }
+
+        // localStorageから既存ユーザー情報を取得
+        function getStoredUser() {
+            const stored = localStorage.getItem('quizUser');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // ユーザー情報をlocalStorageに保存
+        function saveUserToStorage(userId, userName) {
+            localStorage.setItem('quizUser', JSON.stringify({ userId, userName }));
+        }
+
+        // ユーザー名の重複チェック
+        async function checkUserNameExists(name) {
+            try {
+                const participantsRef = database.ref('quizzes/current/participants');
+                const snapshot = await participantsRef.once('value');
+                const participants = snapshot.val();
+                
+                if (!participants) {
+                    return false;
+                }
+                
+                // 同じ名前のユーザーが存在するかチェック
+                for (const uid in participants) {
+                    if (participants[uid].name === name) {
+                        // 同じデバイスからのアクセスかチェック
+                        const storedUser = getStoredUser();
+                        if (storedUser && storedUser.userId === uid) {
+                            return false; // 同じユーザーなので重複ではない
+                        }
+                        return true; // 重複あり
+                    }
+                }
+                
+                return false; // 重複なし
+            } catch (error) {
+                console.error('重複チェックエラー:', error);
+                return false;
+            }
+        }
+
+        // ユーザー登録処理
+        async function handleRegistration(event) {
+            event.preventDefault();
+            
+            const nameInput = document.getElementById('name-input');
+            const registerBtn = document.getElementById('register-btn');
+            const errorMessage = document.getElementById('error-message');
+            
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                errorMessage.textContent = 'お名前を入力してください';
+                errorMessage.classList.add('show');
+                return;
+            }
+            
+            // 重複チェック
+            registerBtn.disabled = true;
+            errorMessage.classList.remove('show');
+            
+            const exists = await checkUserNameExists(name);
+            
+            if (exists) {
+                errorMessage.textContent = 'このお名前は既に使用されています。別のお名前を入力してください。';
+                errorMessage.classList.add('show');
+                registerBtn.disabled = false;
+                return;
+            }
+            
+            // 既存ユーザーかチェック（localStorageから）
+            const storedUser = getStoredUser();
+            if (storedUser && storedUser.userName === name) {
+                // 既存ユーザーとして扱う
+                userId = storedUser.userId;
+                userName = storedUser.userName;
+            } else {
+                // 新規ユーザーとして登録
+                userId = generateUserId(name);
+                userName = name;
+                
+                // Firebaseにユーザー情報を保存
+                try {
+                    const userRef = database.ref(`quizzes/current/participants/${userId}`);
+                    await userRef.set({
+                        name: userName,
+                        score: 0,
+                        registeredAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } catch (error) {
+                    console.error('ユーザー登録エラー:', error);
+                    errorMessage.textContent = '登録に失敗しました。もう一度お試しください。';
+                    errorMessage.classList.add('show');
+                    registerBtn.disabled = false;
+                    return;
+                }
+            }
+            
+            // localStorageに保存
+            saveUserToStorage(userId, userName);
+            
+            // 登録画面を非表示、メイン画面を表示
+            document.getElementById('registration-container').style.display = 'none';
+            document.getElementById('main-container').style.display = 'block';
+            
+            // ユーザー名を表示
+            displayUserName();
+            
+            // クイズ監視を開始
+            watchCurrentQuestion();
+            showWaitingMessage();
+            
+            // 閉じられた問題のスコアを計算
+            checkClosedQuestions();
+        }
+
+        // ユーザー名を表示
+        function displayUserName() {
+            const userNameEl = document.getElementById('user-name');
+            if (userName && userNameEl) {
+                userNameEl.textContent = `回答者: ${userName}`;
+                userNameEl.style.display = 'block';
+            }
+        }
+
+        // 12問の固定クイズデータ
+        const fixedQuizQuestions = [
+            {
+                question: "日経新聞が25年に行った調査「人事が見る 卒業生活躍の大学ランキング」。1位は一橋大学。では、 上智は何位?",
+                options: [
+                    "   2位",
+                    "   5位",
+                    "   8位",
+                    "  14位"
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: "現在博報堂の社員のうち、上智出身者は140名ほどですが、どの学部出身が多いでしょう。トップ３をお選びください。",
+                options: [
+                    "1位 外国語学部  2位 経済学部 3位 文学部",
+                    "1位 理工学部  2位 法学部  3位 経済学部",
+                    "1位 文学部  2位 経済学部 3位 総合人間科学部",
+                    "1位 経済学部  2位 文学部  ３位 理工学部"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "上智大学の男女比は24年度では全体だと、男35:女65です。一番女性比率が高い学科は看護学科ですが、2位はどこ？",
+                options: [
+                    "心理学科",
+                    "フランス文学科",
+                    "社会福祉学科",
+                    "国文学科"
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: "25年 女性初の総理である高市政権が誕生しましたが、上智も25年に女性初の杉村学長が誕生しました。彼女が自身の役割として大切にしていることは何？",
+                options: [
+                    "グローバルフォロワーシップ",
+                    "トランスクリエイション",
+                    "コーディネーション",
+                    "ナビゲーション"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "上智出身の有名Youtuberは誰でしょう？",
+                options: [
+                    "ヘラヘラ三銃士",
+                    "平成フラミンゴ",
+                    "フィッシャーズ",
+                    "コムドット"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "25年 上智大学から初のプロ野球ドラフト指名が誕生。ライオンズ育成枠6位で指名を受けた正木悠馬選手。上智のお祝いインタビューにどのように回答した？",
+                options: [
+                    "上智大学初のプロ野球選手で身が引き締まる思いだ。",
+                    "大学ではスペイン語も学んだ、いずれ海外にも挑戦したい。",
+                    "入学時アメフト部に入ろうと思っていたが、野球部にして良かった。",
+                    "上智大学の練習環境はかなり悪かった。"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "2023年~25年にかけての卒業生の就職先ランキングの累計top3のうち正しいものはどれ？",
+                options: [
+                    "1位 楽天  2位 アクセンチュア 3位 NTTデータ",
+                    "1位 アクセンチュア  2位 日立製作所  3位 ドコモ",
+                    "1位 みずほ  2位 楽天  3位 NTTデータ",
+                    "1位 NTTデータ  2位 LVMH 3位 ANA"
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: "上智大学の年間の広告・広報予算はどれくらいでしょう？",
+                options: [
+                    "1億円未満",
+                    "1億~3億未満",
+                    "3億~5億未満",
+                    "5億~7億未満"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "上智大学の寄付金は年間でいくらくらい？",
+                options: [
+                    "約5億円",
+                    "約7億円",
+                    "約9億円",
+                    "約11億円"
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: "博報堂は上智に寄付をしていませんが、以下のうち、寄付をしていない企業/団体はどれ？",
+                options: [
+                    "NTTデータ",
+                    "イオン1%クラブ",
+                    "アサヒグループ",
+                    "あいおいニッセイ損保"
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: "上智卒の博報堂社員のうち、上智に寄付をしている人たちの寄付金の合計額は2025年は合計いくらだったでしょう。",
+                options: [
+                    "0~1万円未満",
+                    "1万~10万円未満",
+                    "10万~20万円未満",
+                    "20万〜30万未満"
+                ],
+                correctAnswer: 0
+            },
+            {
+                question: "現在の上智大学の経営課題は？",
+                options: [
+                    "投資運用による運用益により黒字だが、市場リスク管理と攻めの投資継続が課題。",
+                    "設備投資や補助金減で大幅な赤字、財政・管理体制の立て直しが最優先。",
+                    "大幅な経費削減で黒字を達成しているが、学費依存率が高く、将来の投資余力確保が課題。",
+                    "赤字からの脱却へ向け、不採算部門整理や学費依存率からの脱却など構造改革が急務。"
+                ],
+                correctAnswer: 3
+            }
+        ];
+
+        // 現在の問題番号とステータスを監視
+        function watchCurrentQuestion() {
+            const quizRef = database.ref('quizzes/current');
+            
+            currentQuestionListener = quizRef.on('value', (snapshot) => {
+                const quizData = snapshot.val();
+                
+                if (!quizData) {
+                    showWaitingMessage();
+                    return;
+                }
+                
+                const questionNumber = quizData.currentQuestion;
+                const status = quizData.status;
+                
+                // statusが'active'で、問題番号が1-12の範囲内の場合のみ問題を表示
+                if (status === 'active' && questionNumber && questionNumber >= 1 && questionNumber <= fixedQuizQuestions.length) {
+                    if (questionNumber !== currentQuestionNumber) {
+                        currentQuestionNumber = questionNumber;
+                        hasVoted = false;
+                        isQuestionClosed = false;
+                        selectedOption = null;
+                        loadQuestion(questionNumber);
+                    }
+                } else {
+                    // 問題が開始されていない、またはクイズが終了している場合
+                    showWaitingMessage();
+                }
+            });
+        }
+
+        // 問題を読み込む
+        async function loadQuestion(questionNumber) {
+            if (questionNumber < 1 || questionNumber > fixedQuizQuestions.length) {
+                showWaitingMessage();
+                return;
+            }
+
+            const questionData = fixedQuizQuestions[questionNumber - 1];
+            
+            // Firebaseから既存の回答を取得
+            if (userId) {
+                try {
+                    const userAnswerRef = database.ref(`quizzes/current/participants/${userId}/answers/${questionNumber}`);
+                    const answerSnapshot = await userAnswerRef.once('value');
+                    const existingAnswer = answerSnapshot.val();
+                    
+                    if (existingAnswer) {
+                        // 既存の回答がある場合
+                        hasVoted = true;
+                        selectedOption = existingAnswer;
+                        userAnswers[questionNumber] = existingAnswer;
+                    } else {
+                        // 既存の回答がない場合
+                        hasVoted = false;
+                        selectedOption = null;
+                    }
+                } catch (error) {
+                    console.error('回答取得エラー:', error);
+                    hasVoted = false;
+                    selectedOption = null;
+                }
+            } else {
+                hasVoted = false;
+                selectedOption = null;
+            }
+            
+            // 問題が閉じられているか確認
+            const questionRef = database.ref(`quizzes/current/questions/${questionNumber}`);
+            questionDataListener = questionRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.closed) {
+                    isQuestionClosed = true;
+                    disableOptions();
+                    updateStatusMessage('この問題は締め切られました', 'closed');
+                    
+                    // 問題が閉じられたらスコアを計算
+                    calculateScore(questionNumber);
+                }
+            });
+
+            // 問題を表示
+            document.getElementById('question-number').textContent = `第${questionNumber}問 / 全${fixedQuizQuestions.length}問`;
+            document.getElementById('question-text').textContent = questionData.question;
+            
+            // 選択肢を表示
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            // 選択状態をリセット（既に回答済みでない場合）
+            if (!hasVoted) {
+                selectedOption = null;
+            }
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = hasVoted;
+            
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            questionData.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerHTML = `
+                    <span class="option-label">${optionLabels[index]}</span>
+                    <span>${option}</span>
+                `;
+                btn.dataset.label = optionLabels[index];
+                btn.dataset.index = index;
+                
+                // 既に回答済みの場合は選択状態を表示
+                if (hasVoted && selectedOption === optionLabels[index]) {
+                    btn.classList.add('selected');
+                }
+                
+                if (!hasVoted && !isQuestionClosed) {
+                    btn.onclick = () => selectOption(optionLabels[index]);
+                } else {
+                    btn.classList.add('disabled');
+                }
+                
+                optionsContainer.appendChild(btn);
+            });
+
+            // 表示を更新
+            document.getElementById('question-container').style.display = 'block';
+            document.getElementById('waiting-screen').style.display = 'none';
+            document.getElementById('status-message').style.display = 'block';
+            
+            if (hasVoted) {
+                updateStatusMessage('回答済みです', 'voted');
+            } else if (isQuestionClosed) {
+                updateStatusMessage('この問題は締め切られました', 'closed');
+            } else {
+                updateStatusMessage('選択肢を選んで「回答を送信する」ボタンを押してください', 'waiting');
+            }
+        }
+
+        // 選択肢を選択
+        function selectOption(label) {
+            if (hasVoted || isQuestionClosed) {
+                return;
+            }
+            
+            selectedOption = label;
+            
+            // すべての選択肢ボタンからselectedクラスを削除
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // 選択された選択肢にselectedクラスを追加
+            buttons.forEach(btn => {
+                if (btn.dataset.label === label) {
+                    btn.classList.add('selected');
+                }
+            });
+            
+            // 送信ボタンを有効化
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = false;
+        }
+
+        // 送信ボタンのハンドラー
+        function handleSubmit() {
+            if (!selectedOption || hasVoted || isQuestionClosed) {
+                return;
+            }
+            submitVote(selectedOption, currentQuestionNumber);
+        }
+
+        // 投票を送信
+        async function submitVote(selectedLabel, questionNumber) {
+            if (hasVoted || isQuestionClosed || !userId) {
+                return;
+            }
+
+            try {
+                // 既に回答済みかチェック（Firebaseから）
+                const userAnswerRef = database.ref(`quizzes/current/participants/${userId}/answers/${questionNumber}`);
+                const answerSnapshot = await userAnswerRef.once('value');
+                const existingAnswer = answerSnapshot.val();
+                
+                // 既に回答済みの場合は、スコア計算をスキップするため、回答を保存しない
+                if (existingAnswer) {
+                    // 既存の回答を表示
+                    userAnswers[questionNumber] = existingAnswer;
+                    hasVoted = true;
+                    markOptionAsSelected(existingAnswer);
+                    disableOptions();
+                    const submitBtn = document.getElementById('submit-btn');
+                    submitBtn.disabled = true;
+                    updateStatusMessage('この問題は既に回答済みです', 'voted');
+                    return;
+                }
+
+                const questionRef = database.ref(`quizzes/current/questions/${questionNumber}`);
+                
+                // トランザクションで投票を追加
+                await questionRef.transaction((current) => {
+                    if (!current) {
+                        current = {
+                            votes: { A: 0, B: 0, C: 0, D: 0 },
+                            totalVotes: 0
+                        };
+                    }
+
+                    if (!current.votes) {
+                        current.votes = { A: 0, B: 0, C: 0, D: 0 };
+                    }
+
+                    if (!current.totalVotes) {
+                        current.totalVotes = 0;
+                    }
+
+                    // 投票を追加
+                    current.votes[selectedLabel] = (current.votes[selectedLabel] || 0) + 1;
+                    current.totalVotes = (current.totalVotes || 0) + 1;
+
+                    return current;
+                });
+
+                // ユーザーの回答をFirebaseに保存
+                await userAnswerRef.set(selectedLabel);
+                
+                // ローカルにも保存
+                userAnswers[questionNumber] = selectedLabel;
+
+                // 投票済み状態に更新
+                hasVoted = true;
+                markOptionAsSelected(selectedLabel);
+                disableOptions();
+                
+                // 送信ボタンを無効化
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = true;
+                
+                updateStatusMessage('回答が送信されました', 'voted');
+
+            } catch (error) {
+                console.error('投票エラー:', error);
+                alert('投票に失敗しました。もう一度お試しください。');
+            }
+        }
+
+        // 選択した選択肢をマーク
+        function markOptionAsSelected(selectedLabel) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.label === selectedLabel) {
+                    btn.classList.add('selected');
+                }
+            });
+        }
+
+        // 選択肢を無効化
+        function disableOptions() {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                btn.classList.add('disabled');
+            });
+        }
+
+        // ステータスメッセージを更新
+        function updateStatusMessage(message, type) {
+            const statusEl = document.getElementById('status-message');
+            statusEl.textContent = message;
+            statusEl.className = `status-message ${type}`;
+        }
+
+        // 待機メッセージを表示
+        function showWaitingMessage() {
+            document.getElementById('question-container').style.display = 'none';
+            document.getElementById('waiting-screen').style.display = 'block';
+            document.getElementById('status-message').style.display = 'none';
+        }
+
+        // スコアを計算（問題が閉じられた時）
+        async function calculateScore(questionNumber) {
+            if (!userId || questionNumber < 1 || questionNumber > fixedQuizQuestions.length) {
+                return;
+            }
+            
+            // 既にスコア計算済みかチェック（Firebaseから）
+            const scoreRef = database.ref(`quizzes/current/participants/${userId}/scores/${questionNumber}`);
+            const scoreSnapshot = await scoreRef.once('value');
+            if (scoreSnapshot.exists()) {
+                // 既にスコア計算済みの場合はスキップ
+                return;
+            }
+            
+            // この問題に回答しているかチェック
+            if (!userAnswers[questionNumber]) {
+                return; // 回答していない場合はスコア加算なし
+            }
+            
+            const questionData = fixedQuizQuestions[questionNumber - 1];
+            const correctAnswerIndex = questionData.correctAnswer;
+            const correctLabel = ['A', 'B', 'C', 'D'][correctAnswerIndex];
+            const userAnswer = userAnswers[questionNumber];
+            
+            // 正解かどうか判定
+            const isCorrect = userAnswer === correctLabel;
+            
+            if (isCorrect) {
+                // スコアを加算
+                try {
+                    const userRef = database.ref(`quizzes/current/participants/${userId}`);
+                    await userRef.transaction((current) => {
+                        if (!current) {
+                            current = { name: userName, score: 0 };
+                        }
+                        if (!current.score) {
+                            current.score = 0;
+                        }
+                        current.score = (current.score || 0) + 1;
+                        return current;
+                    });
+                    
+                    // スコア計算済みフラグを保存
+                    await scoreRef.set(true);
+                } catch (error) {
+                    console.error('スコア加算エラー:', error);
+                }
+            } else {
+                // 不正解の場合も、スコア計算済みフラグを保存（再計算を防ぐため）
+                await scoreRef.set(false);
+            }
+        }
+
+        // 閉じられた問題のスコアをチェック（途中参加者用）
+        async function checkClosedQuestions() {
+            if (!userId) {
+                return;
+            }
+            
+            try {
+                const questionsRef = database.ref('quizzes/current/questions');
+                const snapshot = await questionsRef.once('value');
+                const questions = snapshot.val();
+                
+                if (!questions) {
+                    return;
+                }
+                
+                // 既存の回答をFirebaseから取得
+                const answersRef = database.ref(`quizzes/current/participants/${userId}/answers`);
+                const answersSnapshot = await answersRef.once('value');
+                const existingAnswers = answersSnapshot.val() || {};
+                
+                // 既存の回答をuserAnswersに反映
+                for (const qNum in existingAnswers) {
+                    userAnswers[parseInt(qNum)] = existingAnswers[qNum];
+                }
+                
+                // 各問題をチェック
+                for (let qNum = 1; qNum <= fixedQuizQuestions.length; qNum++) {
+                    if (questions[qNum] && questions[qNum].closed) {
+                        // 閉じられた問題で、回答がある場合、スコアを計算
+                        if (userAnswers[qNum]) {
+                            await calculateScore(qNum);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('閉じられた問題チェックエラー:', error);
+            }
+        }
+
+        // 初期化
+        function init() {
+            // 既存ユーザーかチェック
+            const storedUser = getStoredUser();
+            if (storedUser && storedUser.userId && storedUser.userName) {
+                // 既存ユーザーとして扱う
+                userId = storedUser.userId;
+                userName = storedUser.userName;
+                
+                // メイン画面を表示
+                document.getElementById('registration-container').style.display = 'none';
+                document.getElementById('main-container').style.display = 'block';
+                
+                displayUserName();
+                watchCurrentQuestion();
+                showWaitingMessage();
+                checkClosedQuestions();
+            } else {
+                // 新規ユーザー：登録画面を表示
+                document.getElementById('registration-container').style.display = 'block';
+                document.getElementById('main-container').style.display = 'none';
+            }
+        }
+
+        // ページ読み込み時に初期化
+        window.addEventListener('load', init);
+
+        // ページを離れる時にリスナーを削除
+        window.addEventListener('beforeunload', () => {
+            if (currentQuestionListener) {
+                database.ref('quizzes/current/currentQuestion').off('value', currentQuestionListener);
+            }
+            if (questionDataListener && currentQuestionNumber >= 1) {
+                database.ref(`quizzes/current/questions/${currentQuestionNumber}`).off('value', questionDataListener);
+            }
+        });
+    </script>
+</body>
+</html>
+
