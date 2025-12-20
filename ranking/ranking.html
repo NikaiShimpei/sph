@@ -1395,18 +1395,6 @@
 
         // ===== 第3位を発表 =====
         function announceTop3() {
-            // 参加者が1名の場合は直接優勝者発表へ
-            if (rankedParticipants.length === 1) {
-                announceRank1();
-                return;
-            }
-            
-            // 参加者が2名の場合は第2位から開始
-            if (rankedParticipants.length === 2) {
-                announceRank2();
-                return;
-            }
-            
             showScreen('rank3-screen');
             startCelebration(3);
             // 3位ではojigi.pngは表示しない
