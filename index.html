@@ -2320,21 +2320,21 @@
         function showRanking() {
             // ランキングページを開く
             try {
-                const rankingWindow = window.open('../ranking/ranking.html', '_blank');
+                const rankingWindow = window.open('ranking/ranking.html', '_blank');
                 console.log('ランキングページを開こうとしました:', rankingWindow);
                 
                 // ポップアップがブロックされた場合のフォールバック
                 if (!rankingWindow || rankingWindow.closed || typeof rankingWindow.closed === 'undefined') {
                     console.log('ポップアップがブロックされたため、同じタブで開きます');
                     setTimeout(() => {
-                        window.location.href = '../ranking/ranking.html';
+                        window.location.href = 'ranking/ranking.html';
                     }, 500);
                 }
             } catch (error) {
                 console.error('ランキングページを開く際にエラーが発生しました:', error);
                 // エラーが発生した場合も、同じタブで開く
                 setTimeout(() => {
-                    window.location.href = '../ranking/ranking.html';
+                    window.location.href = 'ranking/ranking.html';
                 }, 500);
             }
         }

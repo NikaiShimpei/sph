@@ -565,8 +565,9 @@
             overlay.classList.add('zooming');
             
             setTimeout(() => {
-                // URLパラメータでクイズ開始を指示
-                window.location.href = '../index.html?startQuiz=true';
+                // URLパラメータでクイズ開始を指示（GitHub PagesのベースURLを考慮）
+                const basePath = window.location.pathname.split('/Title/')[0];
+                window.location.href = basePath + '/index.html?startQuiz=true';
             }, 600);
         }
 
