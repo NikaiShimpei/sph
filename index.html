@@ -1117,6 +1117,23 @@
             const text = inputField.value;
             if (!text || !text.trim()) return;
 
+            // quiz_startまたはquiz_sophiaを検出（オープニング画面に遷移）
+            // 大文字小文字を問わず、スペースやアンダースコアの有無を問わず検出
+            const normalizedText = text.toLowerCase().trim().replace(/[_\s]+/g, ' ').replace(/\s+/g, ' ');
+            const normalizedWithoutSpaces = normalizedText.replace(/\s/g, '');
+            if (normalizedText === 'quiz start' || normalizedWithoutSpaces === 'quizstart' || 
+                normalizedText === 'quiz sophia' || normalizedWithoutSpaces === 'quizsophia') {
+                // ユーザーのメッセージを表示
+                addMessage(text, 'user');
+                inputField.value = '';
+                // オープニング画面に遷移
+                addMessage('オープニング画面に移動します...', 'bot');
+                setTimeout(() => {
+                    window.location.href = 'Title/opening.html';
+                }, 500);
+                return; // ここで処理を終了（Dify APIへのリクエストを送信しない）
+            }
+
             // ユーザーのメッセージを表示
             addMessage(text, 'user');
             inputField.value = '';
@@ -1165,20 +1182,6 @@
                 if(loadingMsg) loadingMsg.remove();
 
                 const aiResponse = data.answer;
-
-                // quiz_startまたはquiz_sophiaを検出（オープニング画面に遷移）
-                // 大文字小文字を問わず、スペースやアンダースコアの有無を問わず検出
-                const normalizedText = text.toLowerCase().trim().replace(/[_\s]+/g, ' ').replace(/\s+/g, ' ');
-                const normalizedWithoutSpaces = normalizedText.replace(/\s/g, '');
-                if (normalizedText === 'quiz start' || normalizedWithoutSpaces === 'quizstart' || 
-                    normalizedText === 'quiz sophia' || normalizedWithoutSpaces === 'quizsophia') {
-                    // オープニング画面に遷移
-                    addMessage('オープニング画面に移動します...', 'bot');
-                    setTimeout(() => {
-                        window.location.href = 'Title/opening.html';
-                    }, 500);
-                    return; // ここで処理を終了
-                }
                 
                 // winner?を検出（ランキング表示）
                 const winnerText = normalizedText.replace(/[?？]/g, '').trim();
