@@ -1259,34 +1259,6 @@
         let rankedParticipants = [];
         let top3Data = { rank1: [], rank2: [], rank3: [] };
 
-        // ===== ダミーデータ生成（テスト用） =====
-        function generateDummyData() {
-            const names = [
-                '山田太郎', '佐藤花子', '鈴木一郎', '田中次郎', '渡辺三郎',
-                '伊藤四郎', '中村五郎', '小林六郎', '加藤七郎', '吉田八郎',
-                '山本九郎', '松本十郎', '井上十一', '木村十二', '林十三',
-                '斎藤十四', '清水十五', '山口十六', '森十七', '池田十八',
-                '橋本十九', '石井二十', '前田二一', '小川二二', '藤田二三',
-                '岡田二四', '長谷川二五', '村上二六', '近藤二七', '坂本二八',
-                '遠藤二九', '青木三十', '藤井三一', '西村三二', '福田三三',
-                '太田三四', '藤原三五', '岡本三六', '松田三七', '中島三八',
-                '中野三九', '原田四十', '小野四一', '田村四二', '竹内四三',
-                '金子四四', '菅原四五', '横山四六', '新井四七', '岩崎四八'
-            ];
-
-            const dummyData = [];
-            for (let i = 0; i < 50; i++) {
-                const score = Math.floor(Math.random() * 11);
-                dummyData.push({
-                    userId: `dummy-${i}`,
-                    name: names[i] || `参加者${i + 1}`,
-                    score: score
-                });
-            }
-
-            return dummyData;
-        }
-
         // ===== ランキングデータを取得 =====
         function loadRanking() {
             const participantsRef = database.ref('quizzes/current/participants');
@@ -1294,10 +1266,11 @@
             participantsRef.once('value').then((snapshot) => {
                 const participants = snapshot.val();
                 
-                if (!participants || Object.keys(participants).length < 3) {
-                    console.log('テスト環境：ダミーデータを使用します');
-                    allParticipants = generateDummyData();
+                if (!participants || Object.keys(participants).length === 0) {
+                    console.log('参加者データがありません');
+                    allParticipants = [];
                 } else {
+                    // 実際のFirebaseデータのみを使用
                     allParticipants = Object.keys(participants).map(userId => ({
                         userId: userId,
                         name: participants[userId].name || '名無し',
@@ -1309,7 +1282,7 @@
                 displayRanking();
             }).catch((error) => {
                 console.error('ランキング取得エラー:', error);
-                allParticipants = generateDummyData();
+                allParticipants = [];
                 calculateRanking();
                 displayRanking();
             });
