@@ -1166,51 +1166,16 @@
 
                 const aiResponse = data.answer;
 
-                // quiz_startまたはquiz_sophiaを検出（固定クイズモード開始）
+                // quiz_startまたはquiz_sophiaを検出（オープニング画面に遷移）
                 // 大文字小文字を問わず、スペースやアンダースコアの有無を問わず検出
                 const normalizedText = text.toLowerCase().trim().replace(/[_\s]+/g, ' ').replace(/\s+/g, ' ');
                 const normalizedWithoutSpaces = normalizedText.replace(/\s/g, '');
                 if (normalizedText === 'quiz start' || normalizedWithoutSpaces === 'quizstart' || 
                     normalizedText === 'quiz sophia' || normalizedWithoutSpaces === 'quizsophia') {
-                    // QRコード確認待ちモードに入る
-                    isWaitingForQRConfirmation = true;
-                    
-                    // QRコードとメッセージを表示
-                    addMessage('OK, じゃあまずはこのリンクから、自分の名前を登録してね。登録が終わったらクイズをスタートするよ', 'bot');
-                    
-                    // QRコードを大きく表示
-                    const qrMessage = document.createElement('div');
-                    qrMessage.className = 'message bot';
-                    qrMessage.innerHTML = `
-                        <div class="message-text">
-                            <img src="QR.png" alt="QR Code" style="max-width: 60vw; height: auto; display: block; margin: 2vh auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
-                            <div style="text-align: center; margin-top: 1vh; font-size: clamp(1rem, 2.5vw, 1.3rem);">
-                                <a href="https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html" target="_blank" style="color: #ffeb3b; text-decoration: underline;">
-                                    https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                    document.getElementById('chat-container').appendChild(qrMessage);
-                    scrollToBottom();
-                    
-                    return; // ここで処理を終了
-                }
-                
-                // OKと入力された場合の処理（QRコード確認後）
-                if (isWaitingForQRConfirmation && (normalizedText === 'ok' || normalizedWithoutSpaces === 'ok')) {
-                    isWaitingForQRConfirmation = false;
-                    
-                    // 固定クイズモードを開始
-                    isFixedQuizMode = true;
-                    currentQuestionNumber = 1;
-                    
-                    // 開始メッセージを表示（固定メッセージ）
-                    addMessage('それでは、クイズ!  アルマ マーテル 開始！', 'bot');
-                    
-                    // 1問目を直接全画面表示
+                    // オープニング画面に遷移
+                    addMessage('オープニング画面に移動します...', 'bot');
                     setTimeout(() => {
-                        startFixedQuiz(1);
+                        window.location.href = '../index.html';
                     }, 500);
                     return; // ここで処理を終了
                 }
@@ -2321,6 +2286,57 @@
             
             // 終了メッセージをチャットに表示
             addMessage(`全${fixedQuizQuestions.length}問終了しました！お疲れ様でした！`, 'bot');
+            
+            // ランキングを表示するボタンを表示
+            const rankingButtonMessage = document.createElement('div');
+            rankingButtonMessage.className = 'message bot';
+            rankingButtonMessage.innerHTML = `
+                <div class="message-text" style="text-align: center;">
+                    <button onclick="showRanking()" style="
+                        background: linear-gradient(135deg, #9E1B32 0%, #b4143c 100%);
+                        color: white;
+                        border: none;
+                        padding: 15px 40px;
+                        font-size: clamp(1.2rem, 3vw, 1.8rem);
+                        font-weight: bold;
+                        border-radius: 50px;
+                        cursor: pointer;
+                        box-shadow: 0 4px 15px rgba(158, 27, 50, 0.4);
+                        transition: all 0.3s ease;
+                        font-family: 'M PLUS 1p', sans-serif;
+                        margin: 20px auto;
+                        display: block;
+                    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(158, 27, 50, 0.6)';" 
+                       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 15px rgba(158, 27, 50, 0.4)';">
+                        ランキングを表示する
+                    </button>
+                </div>
+            `;
+            document.getElementById('chat-container').appendChild(rankingButtonMessage);
+            scrollToBottom();
+        }
+        
+        // ランキングを表示する関数
+        function showRanking() {
+            // ランキングページを開く
+            try {
+                const rankingWindow = window.open('../ranking/ranking.html', '_blank');
+                console.log('ランキングページを開こうとしました:', rankingWindow);
+                
+                // ポップアップがブロックされた場合のフォールバック
+                if (!rankingWindow || rankingWindow.closed || typeof rankingWindow.closed === 'undefined') {
+                    console.log('ポップアップがブロックされたため、同じタブで開きます');
+                    setTimeout(() => {
+                        window.location.href = '../ranking/ranking.html';
+                    }, 500);
+                }
+            } catch (error) {
+                console.error('ランキングページを開く際にエラーが発生しました:', error);
+                // エラーが発生した場合も、同じタブで開く
+                setTimeout(() => {
+                    window.location.href = '../ranking/ranking.html';
+                }, 500);
+            }
         }
 
         // 回答をDifyに送信（判定結果を受け取る）
@@ -2796,6 +2812,20 @@
         window.addEventListener('load', () => {
             initMusic();
             updateMusicButtonState();
+            
+            // URLパラメータでクイズ開始をチェック
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('startQuiz') === 'true') {
+                // オープニング画面から来た場合、直接クイズを開始
+                setTimeout(() => {
+                    isFixedQuizMode = true;
+                    currentQuestionNumber = 1;
+                    addMessage('それでは、クイズ!  アルマ マーテル 開始！', 'bot');
+                    setTimeout(() => {
+                        startFixedQuiz(1);
+                    }, 500);
+                }, 500);
+            }
         });
 
         // ページを離れるときに音楽を停止

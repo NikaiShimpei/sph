@@ -199,6 +199,41 @@
             z-index: 5;
         }
 
+        /* QRコードエリア */
+        #qr-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% + 200px));
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+        }
+
+        #qr-code {
+            width: 25%;
+            min-width: 200px;
+            max-width: 400px;
+            height: auto;
+            display: block;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        #qr-link {
+            color: #ffeb3b;
+            text-decoration: underline;
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #qr-link:hover {
+            color: #fff;
+        }
+
         /* メインタイトル */
         #main-title {
             width: 75%;
@@ -401,6 +436,13 @@
             #bird-character {
                 width: 25%;
             }
+            #qr-code {
+                width: 40%;
+                min-width: 150px;
+            }
+            #qr-area {
+                transform: translate(-50%, calc(-50% + 150px));
+            }
         }
     </style>
 </head>
@@ -424,6 +466,16 @@
         <div id="center-area">
             <img id="main-title" src="Title/almamater2.png" alt="Quiz Alma Mater">
             <img id="subtitle" src="Title/sh.png" alt="Sophia & Hakuhodo">
+        </div>
+
+        <!-- QRコードエリア -->
+        <div id="qr-area">
+            <img id="qr-code" src="chat/QR.png" alt="QR Code">
+            <div>
+                <a id="qr-link" href="https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html" target="_blank">
+                    https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html
+                </a>
+            </div>
         </div>
 
         <!-- 下部エリア -->
@@ -507,13 +559,14 @@
             }
         }
 
-        // チャットページへ遷移（エフェクト付き）
+        // クイズ開始（エフェクト付き）
         function goToChatWithEffect() {
             const overlay = document.getElementById('pxlogo-zoom-overlay');
             overlay.classList.add('zooming');
             
             setTimeout(() => {
-                window.location.href = 'chat/sophiaquiz.html';
+                // URLパラメータでクイズ開始を指示
+                window.location.href = 'chat/sophiaquiz.html?startQuiz=true';
             }, 600);
         }
 
