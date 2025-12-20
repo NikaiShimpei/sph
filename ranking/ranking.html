@@ -1358,24 +1358,20 @@
                 return;
             }
 
-            const others = rankedParticipants.filter(p => 
-                !top3Data.rank1.includes(p) && 
-                !top3Data.rank2.includes(p) && 
-                !top3Data.rank3.includes(p)
-            );
-
-            const reversedOthers = [...others].reverse();
-            reversedOthers.forEach((participant, index) => {
+            // 参加者が1-2名の場合もランキングを表示
+            // トップ3に含まれる参加者も含めて、全参加者を表示
+            const allToDisplay = [...rankedParticipants].reverse();
+            allToDisplay.forEach((participant, index) => {
                 const item = createRankingItem(participant, participant.rank);
                 item.style.animationDelay = `${index * 0.05}s`;
                 rankingList.appendChild(item);
             });
 
-            // 参加者が3人未満の場合はトップ3発表ボタンを非表示
-            if (rankedParticipants.length < 3) {
-                document.getElementById('announce-top3-btn').style.display = 'none';
-            } else {
+            // 参加者が1名以上の場合、トップ3発表ボタンを表示
+            if (rankedParticipants.length >= 1) {
                 document.getElementById('announce-top3-btn').style.display = 'block';
+            } else {
+                document.getElementById('announce-top3-btn').style.display = 'none';
             }
         }
 
@@ -1399,6 +1395,18 @@
 
         // ===== 第3位を発表 =====
         function announceTop3() {
+            // 参加者が1名の場合は直接優勝者発表へ
+            if (rankedParticipants.length === 1) {
+                announceRank1();
+                return;
+            }
+            
+            // 参加者が2名の場合は第2位から開始
+            if (rankedParticipants.length === 2) {
+                announceRank2();
+                return;
+            }
+            
             showScreen('rank3-screen');
             startCelebration(3);
             // 3位ではojigi.pngは表示しない
