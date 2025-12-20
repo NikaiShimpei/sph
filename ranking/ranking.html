@@ -2119,9 +2119,8 @@
         // ===== ページ読み込み時にランキングを取得 =====
         window.addEventListener('load', () => {
             loadRanking();
-            initMusicState(); // 音楽の状態を初期化
-            initBackgroundMusic(); // 背景音楽を初期化
-            playBackgroundMusic(); // 背景音楽を自動再生
+            initMusicState(); // 音楽の状態を初期化（デフォルトでOFF）
+            initBackgroundMusic(); // 背景音楽を初期化（再生はしない）
             hideAllCharacters(); // 初期状態でキャラクターを非表示
         });
 
