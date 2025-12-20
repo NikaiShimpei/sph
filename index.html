@@ -1558,12 +1558,32 @@
                     
                     // ★重要：本番前にテストデータをクリア
                     // 既存のparticipantsデータを削除（テストデータをクリア）
-                    const participantsRef = database.ref('quizzes/current/participants');
-                    await participantsRef.remove();
+                    try {
+                        const participantsRef = database.ref('quizzes/current/participants');
+                        const participantsSnapshot = await participantsRef.once('value');
+                        const participantsData = participantsSnapshot.val();
+                        
+                        if (participantsData) {
+                            console.log('既存のparticipantsデータを削除します:', Object.keys(participantsData).length, '人');
+                            await participantsRef.remove();
+                            console.log('participantsデータの削除が完了しました');
+                        } else {
+                            console.log('削除するparticipantsデータはありません');
+                        }
+                    } catch (error) {
+                        console.error('participantsデータの削除エラー:', error);
+                        // エラーが発生しても続行（手動で削除が必要な場合がある）
+                        alert('警告: テストデータの削除に失敗しました。Firebaseコンソールから手動で削除してください。');
+                    }
                     
                     // 既存のquestionsデータも削除（念のため）
-                    const questionsRef = database.ref('quizzes/current/questions');
-                    await questionsRef.remove();
+                    try {
+                        const questionsRef = database.ref('quizzes/current/questions');
+                        await questionsRef.remove();
+                        console.log('questionsデータの削除が完了しました');
+                    } catch (error) {
+                        console.error('questionsデータの削除エラー:', error);
+                    }
                     
                     // クイズセッションを初期化
                     await quizRef.set({
