@@ -506,6 +506,24 @@
                 // 既存ユーザーとして扱う
                 userId = storedUser.userId;
                 userName = storedUser.userName;
+                
+                // Firebaseに名前が保存されているか確認し、なければ保存
+                try {
+                    const userRef = database.ref(`quizzes/current/participants/${userId}`);
+                    const userSnapshot = await userRef.once('value');
+                    const userData = userSnapshot.val();
+                    
+                    // 名前が保存されていない、または異なる場合は更新
+                    if (!userData || !userData.name || userData.name !== userName) {
+                        await userRef.update({
+                            name: userName,
+                            registeredAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                } catch (error) {
+                    console.error('ユーザー情報更新エラー:', error);
+                    // エラーが発生しても続行（名前は表示される）
+                }
             } else {
                 // 新規ユーザーとして登録
                 userId = generateUserId(name);
@@ -1027,13 +1045,31 @@
         }
 
         // 初期化
-        function init() {
+        async function init() {
             // 既存ユーザーかチェック
             const storedUser = getStoredUser();
             if (storedUser && storedUser.userId && storedUser.userName) {
                 // 既存ユーザーとして扱う
                 userId = storedUser.userId;
                 userName = storedUser.userName;
+                
+                // Firebaseに名前が保存されているか確認し、なければ保存
+                try {
+                    const userRef = database.ref(`quizzes/current/participants/${userId}`);
+                    const userSnapshot = await userRef.once('value');
+                    const userData = userSnapshot.val();
+                    
+                    // 名前が保存されていない、または異なる場合は更新
+                    if (!userData || !userData.name || userData.name !== userName) {
+                        await userRef.update({
+                            name: userName,
+                            registeredAt: firebase.database.ServerValue.TIMESTAMP
+                        });
+                    }
+                } catch (error) {
+                    console.error('ユーザー情報更新エラー:', error);
+                    // エラーが発生しても続行（名前は表示される）
+                }
                 
                 // メイン画面を表示
                 document.getElementById('registration-container').style.display = 'none';
