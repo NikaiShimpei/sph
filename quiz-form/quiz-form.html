@@ -1064,6 +1064,14 @@
             }
         }
 
+        // ユーザーIDから名前を抽出（user-名前 の形式から）
+        function extractNameFromUserId(userId) {
+            if (userId && userId.startsWith('user-')) {
+                return userId.substring(5); // 'user-' を除去
+            }
+            return null;
+        }
+
         // 初期化
         async function init() {
             // 既存ユーザーかチェック
@@ -1103,6 +1111,48 @@
                 // 新規ユーザー：登録画面を表示
                 document.getElementById('registration-container').style.display = 'block';
                 document.getElementById('main-container').style.display = 'none';
+            }
+            
+            // 既存のFirebaseデータに名前がないユーザーを補完
+            try {
+                await fixMissingNames();
+            } catch (error) {
+                console.error('名前補完エラー:', error);
+            }
+        }
+        
+        // Firebaseに名前がない既存ユーザーの名前を補完
+        async function fixMissingNames() {
+            try {
+                const participantsRef = database.ref('quizzes/current/participants');
+                const snapshot = await participantsRef.once('value');
+                const participants = snapshot.val();
+                
+                if (!participants) {
+                    return;
+                }
+                
+                // 各参加者をチェック
+                for (const uid in participants) {
+                    const participant = participants[uid];
+                    
+                    // 名前が保存されていない場合
+                    if (!participant.name) {
+                        // ユーザーIDから名前を推測
+                        const extractedName = extractNameFromUserId(uid);
+                        
+                        if (extractedName) {
+                            // 名前を保存
+                            const userRef = database.ref(`quizzes/current/participants/${uid}`);
+                            await userRef.update({
+                                name: extractedName
+                            });
+                            console.log(`名前を補完しました: ${uid} → ${extractedName}`);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('名前補完処理エラー:', error);
             }
         }
 
