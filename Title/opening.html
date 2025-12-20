@@ -26,7 +26,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('op背景.png');
+            background-image: url('Title/op背景.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -199,6 +199,41 @@
             z-index: 5;
         }
 
+        /* QRコードエリア */
+        #qr-area {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% + 200px));
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+        }
+
+        #qr-code {
+            width: 25%;
+            min-width: 200px;
+            max-width: 400px;
+            height: auto;
+            display: block;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+
+        #qr-link {
+            color: #ffeb3b;
+            text-decoration: underline;
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #qr-link:hover {
+            color: #fff;
+        }
+
         /* メインタイトル */
         #main-title {
             width: 75%;
@@ -343,7 +378,7 @@
             transform: translate(-50%, -50%) scale(0);
             width: 100vw;
             height: 100vh;
-            background-image: url('pxlogo.png');
+            background-image: url('Title/pxlogo.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
@@ -401,6 +436,13 @@
             #bird-character {
                 width: 25%;
             }
+            #qr-code {
+                width: 40%;
+                min-width: 150px;
+            }
+            #qr-area {
+                transform: translate(-50%, calc(-50% + 150px));
+            }
         }
     </style>
 </head>
@@ -412,25 +454,35 @@
     <div id="container">
         <!-- 雲とキャラクター -->
         <div id="clouds-container">
-            <img id="kumo1" src="kumo1.png" alt="雲1" class="cloud">
-            <img id="kumo2" src="kumo2.png" alt="雲2" class="cloud">
-            <img id="kumo3" src="kumo3.png" alt="雲3" class="cloud">
-            <img id="kumo4" src="kumo4.png" alt="雲4" class="cloud">
-            <img id="kumo5" src="kumo5.png" alt="雲5" class="cloud">
-            <img id="bird-character" src="flying2.png" alt="飛んでいるキャラクター">
+            <img id="kumo1" src="Title/kumo1.png" alt="雲1" class="cloud">
+            <img id="kumo2" src="Title/kumo2.png" alt="雲2" class="cloud">
+            <img id="kumo3" src="Title/kumo3.png" alt="雲3" class="cloud">
+            <img id="kumo4" src="Title/kumo4.png" alt="雲4" class="cloud">
+            <img id="kumo5" src="Title/kumo5.png" alt="雲5" class="cloud">
+            <img id="bird-character" src="Title/flying2.png" alt="飛んでいるキャラクター">
         </div>
 
         <!-- 中央エリア -->
         <div id="center-area">
-            <img id="main-title" src="almamater2.png" alt="Quiz Alma Mater">
-            <img id="subtitle" src="sh.png" alt="Sophia & Hakuhodo">
+            <img id="main-title" src="Title/almamater2.png" alt="Quiz Alma Mater">
+            <img id="subtitle" src="Title/sh.png" alt="Sophia & Hakuhodo">
+        </div>
+
+        <!-- QRコードエリア -->
+        <div id="qr-area">
+            <img id="qr-code" src="../chat/QR.png" alt="QR Code">
+            <div>
+                <a id="qr-link" href="https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html" target="_blank">
+                    https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html
+                </a>
+            </div>
         </div>
 
         <!-- 下部エリア -->
         <div id="bottom-area">
             <div id="start-button-container" onclick="goToChatWithEffect()">
-                <img id="start-button" src="start.png" alt="START">
-                <img id="pxlogo-hover" src="pxlogo.png" alt="PX Logo">
+                <img id="start-button" src="Title/start.png" alt="START">
+                <img id="pxlogo-hover" src="Title/pxlogo.png" alt="PX Logo">
             </div>
         </div>
     </div>
@@ -448,7 +500,7 @@
 
         // ページ読み込み時に音楽を初期化
         function initMusic() {
-            backgroundMusic = new Audio('opener.mp3');
+            backgroundMusic = new Audio('Title/opener.mp3');
             backgroundMusic.loop = true;
             backgroundMusic.volume = 0.5;
             
@@ -507,13 +559,14 @@
             }
         }
 
-        // チャットページへ遷移（エフェクト付き）
+        // クイズ開始（エフェクト付き）
         function goToChatWithEffect() {
             const overlay = document.getElementById('pxlogo-zoom-overlay');
             overlay.classList.add('zooming');
             
             setTimeout(() => {
-                window.location.href = '../chat/sophiaquiz.html';
+                // URLパラメータでクイズ開始を指示
+                window.location.href = 'index.html?startQuiz=true';
             }, 600);
         }
 
@@ -531,4 +584,3 @@
     </script>
 </body>
 </html>
-
