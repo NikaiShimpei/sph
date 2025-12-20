@@ -987,6 +987,10 @@
                         if (!current) {
                             current = { name: userName, score: 0 };
                         }
+                        // 名前が保存されていない場合は確実に保存
+                        if (!current.name || current.name !== userName) {
+                            current.name = userName;
+                        }
                         if (!current.score) {
                             current.score = 0;
                         }
@@ -1000,7 +1004,23 @@
                     console.error('スコア加算エラー:', error);
                 }
             } else {
-                // 不正解の場合も、スコア計算済みフラグを保存（再計算を防ぐため）
+                // 不正解の場合も、名前が保存されているか確認
+                try {
+                    const userRef = database.ref(`quizzes/current/participants/${userId}`);
+                    const userSnapshot = await userRef.once('value');
+                    const userData = userSnapshot.val();
+                    
+                    // 名前が保存されていない場合は保存
+                    if (!userData || !userData.name || userData.name !== userName) {
+                        await userRef.update({
+                            name: userName
+                        });
+                    }
+                } catch (error) {
+                    console.error('名前保存エラー:', error);
+                }
+                
+                // スコア計算済みフラグを保存（再計算を防ぐため）
                 await scoreRef.set(false);
             }
         }

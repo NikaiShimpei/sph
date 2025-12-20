@@ -1279,12 +1279,18 @@
                     allParticipants = [];
                 } else {
                     // 実際のFirebaseデータのみを使用
-                    allParticipants = Object.keys(participants).map(userId => ({
-                        userId: userId,
-                        name: participants[userId].name || '名無し',
-                        score: participants[userId].score || 0
-                    }));
+                    allParticipants = Object.keys(participants).map(userId => {
+                        const participant = participants[userId];
+                        // デバッグ用ログ
+                        console.log(`参加者 ${userId}:`, participant);
+                        return {
+                            userId: userId,
+                            name: participant?.name || '名無し',
+                            score: participant?.score || 0
+                        };
+                    });
                     console.log('参加者データを取得:', allParticipants.length, '人');
+                    console.log('参加者詳細:', allParticipants);
                 }
 
                 calculateRanking();
