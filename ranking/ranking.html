@@ -1259,11 +1259,19 @@
         let rankedParticipants = [];
         let top3Data = { rank1: [], rank2: [], rank3: [] };
 
-        // ===== ランキングデータを取得 =====
+        // ===== ランキングデータを取得（リアルタイム更新） =====
+        let participantsListener = null;
+        
         function loadRanking() {
             const participantsRef = database.ref('quizzes/current/participants');
             
-            participantsRef.once('value').then((snapshot) => {
+            // 既存のリスナーを削除
+            if (participantsListener) {
+                participantsRef.off('value', participantsListener);
+            }
+            
+            // リアルタイムでデータを監視
+            participantsListener = participantsRef.on('value', (snapshot) => {
                 const participants = snapshot.val();
                 
                 if (!participants || Object.keys(participants).length === 0) {
@@ -1276,11 +1284,12 @@
                         name: participants[userId].name || '名無し',
                         score: participants[userId].score || 0
                     }));
+                    console.log('参加者データを取得:', allParticipants.length, '人');
                 }
 
                 calculateRanking();
                 displayRanking();
-            }).catch((error) => {
+            }, (error) => {
                 console.error('ランキング取得エラー:', error);
                 allParticipants = [];
                 calculateRanking();
@@ -1342,6 +1351,13 @@
             const rankingList = document.getElementById('ranking-list');
             rankingList.innerHTML = '';
 
+            // 参加者が0人の場合
+            if (rankedParticipants.length === 0) {
+                rankingList.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255, 255, 255, 0.7); font-size: 1.5rem;">まだ参加者がいません</div>';
+                document.getElementById('announce-top3-btn').style.display = 'none';
+                return;
+            }
+
             const others = rankedParticipants.filter(p => 
                 !top3Data.rank1.includes(p) && 
                 !top3Data.rank2.includes(p) && 
@@ -1355,7 +1371,12 @@
                 rankingList.appendChild(item);
             });
 
-            document.getElementById('announce-top3-btn').style.display = 'block';
+            // 参加者が3人未満の場合はトップ3発表ボタンを非表示
+            if (rankedParticipants.length < 3) {
+                document.getElementById('announce-top3-btn').style.display = 'none';
+            } else {
+                document.getElementById('announce-top3-btn').style.display = 'block';
+            }
         }
 
         // ===== ランキングアイテムを作成 =====
@@ -2102,7 +2123,9 @@
         // ===== ページ読み込み時にランキングを取得 =====
         window.addEventListener('load', () => {
             loadRanking();
-            initMusicState(); // デフォルトで音楽はoff
+            initMusicState(); // 音楽の状態を初期化
+            initBackgroundMusic(); // 背景音楽を初期化
+            playBackgroundMusic(); // 背景音楽を自動再生
             hideAllCharacters(); // 初期状態でキャラクターを非表示
         });
 
