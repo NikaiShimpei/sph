@@ -204,7 +204,7 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, calc(-50% + 200px));
+            transform: translate(-50%, calc(-50% + 220px));
             width: 100%;
             text-align: center;
             z-index: 5;
@@ -223,16 +223,6 @@
             image-rendering: crisp-edges;
         }
 
-        #qr-link {
-            color: #ffeb3b;
-            text-decoration: underline;
-            font-size: clamp(0.9rem, 2vw, 1.2rem);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        #qr-link:hover {
-            color: #fff;
-        }
 
         /* メインタイトル */
         #main-title {
@@ -260,7 +250,7 @@
             width: 55%;
             max-width: 1990px;
             height: auto;
-            margin: -30px auto 0;
+            margin: -60px auto 0;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
             animation: subtitleGlow 3s ease-in-out infinite;
@@ -471,11 +461,6 @@
         <!-- QRコードエリア -->
         <div id="qr-area">
             <img id="qr-code" src="../chat/QR.png" alt="QR Code">
-            <div>
-                <a id="qr-link" href="https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html" target="_blank">
-                    https://nikaishimpei.github.io/sph/quiz-form/quiz-form.html
-                </a>
-            </div>
         </div>
 
         <!-- 下部エリア -->
