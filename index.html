@@ -328,7 +328,7 @@
         }
         
         #quiz-question-intro {
-            font-size: clamp(1.2em, 2.5vw, 1.8em); /* 16:9画面に応じて調整 */
+            font-size: clamp(1.4em, 2.9vw, 2.1em); /* 16:9画面に応じて調整（約15%増） */
             text-align: center;
             margin-bottom: 0;
             color: rgba(255, 255, 255, 0.9);
@@ -342,7 +342,7 @@
             top: -7vh;
             left: 50%;
             transform: translateX(-50%);
-            font-size: clamp(2em, 4vw, 3em); /* 16:9画面に応じて調整 */
+            font-size: clamp(2.3em, 4.6vw, 3.5em); /* 16:9画面に応じて調整（約15%増） */
             font-weight: bold;
             color: #ffeb3b;
             text-shadow: 0 0 20px rgba(255, 235, 59, 0.8);
@@ -361,7 +361,7 @@
         }
         
         #quiz-question-main {
-            font-size: clamp(2.2em, 5vw, 3.5em); /* スクリーン投影用に大きく調整 */
+            font-size: clamp(2.5em, 5.75vw, 4em); /* スクリーン投影用に大きく調整（約15%増） */
             font-weight: bold;
             text-align: center;
             line-height: 1.4;
@@ -459,7 +459,7 @@
             color: white; 
             border: 3px solid #b4143c;
             padding: 2vh 2vw; 
-            font-size: clamp(1.2em, 2.5vw, 1.8em); /* 16:9画面に応じて調整 */
+            font-size: clamp(1.4em, 2.9vw, 2.1em); /* 16:9画面に応じて調整（約15%増） */
             font-weight: bold; 
             border-radius: 12px;
             cursor: pointer; 
@@ -569,7 +569,7 @@
 
         #quiz-feedback {
             margin-top: 3vh;
-            font-size: clamp(1.8em, 4vw, 2.8em); /* 16:9画面に応じて調整、問題文と同じサイズ */
+            font-size: clamp(2.1em, 4.6vw, 3.2em); /* 16:9画面に応じて調整（約15%増） */
             font-weight: bold;
             text-align: center;
             min-height: 5vh;
@@ -607,7 +607,7 @@
 
         #quiz-explanation {
             margin-top: 2vh;
-            font-size: clamp(1.8em, 4vw, 2.8em); /* 16:9画面に応じて調整、問題文と同じサイズ */
+            font-size: clamp(2.1em, 4.6vw, 3.2em); /* 16:9画面に応じて調整（約15%増） */
             text-align: center;
             max-width: 85vw; /* 16:9画面では横方向の85% */
             line-height: 1.6;
@@ -743,7 +743,7 @@
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 1.8em;
+            font-size: 2.1em; /* 約15%増 */
             color: #b4143c;
             font-weight: bold;
             text-shadow: 0 0 10px rgba(180, 20, 60, 0.9), 0 0 20px rgba(111, 1, 37, 0.6);
@@ -763,15 +763,15 @@
                 max-width: 95vw;
             }
             .option-btn { 
-                font-size: 1.2em; 
+                font-size: 1.4em; /* 約15%増 */
                 padding: 2vh 2vw 2vh 50px; 
                 min-height: 10vh; 
             }
-            .option-label { font-size: 1.5em; left: 10px; }
-            #quiz-feedback { font-size: 1.8em; max-width: 95vw; }
-            #quiz-explanation { font-size: 1.8em; padding: 2vh 3vw; max-width: 95vw; }
+            .option-label { font-size: 1.7em; left: 10px; } /* 約15%増 */
+            #quiz-feedback { font-size: 2.1em; max-width: 95vw; } /* 約15%増 */
+            #quiz-explanation { font-size: 2.1em; padding: 2vh 3vw; max-width: 95vw; } /* 約15%増 */
             #quiz-timer { 
-                font-size: 2em; 
+                font-size: 2.3em; /* 約15%増 */
                 top: -6vh; 
                 left: 50%;
                 transform: translateX(-50%);
@@ -1837,11 +1837,11 @@
                 // 問題文の色を白色に統一
                 questionMain.style.color = 'white';
                 
-                // Q2のフォントサイズを5%下げる
+                // Q2のフォントサイズを5%下げる（全体のフォントサイズ増加に合わせて調整）
                 if (isFixedQuizMode && currentQuestionNumber === 2) {
-                    questionMain.style.fontSize = 'clamp(2.09em, 4.75vw, 3.33em)';
+                    questionMain.style.fontSize = 'clamp(2.4em, 5.5vw, 3.8em)'; /* 約15%増 */
                 } else {
-                    questionMain.style.fontSize = 'clamp(2.2em, 5vw, 3.5em)';
+                    questionMain.style.fontSize = 'clamp(2.5em, 5.75vw, 4em)'; /* 約15%増 */
                 }
                 
                 // 選択肢Dから抽出したコメントを問題文に追加（小さい文字サイズ）
