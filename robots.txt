@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nikaishimpei.github.io/sph/sitemap.xml
